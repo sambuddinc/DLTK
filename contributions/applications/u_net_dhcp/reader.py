@@ -13,9 +13,8 @@ from dltk.io.augmentation import add_gaussian_noise, flip, extract_class_balance
     extract_random_example_array
 from dltk.io.preprocessing import whitening
 
-t2_name = "sub-NeoT21_6_ses-none_T2w_restore_brain.nii.gz"
-label_name = "sub-NeoT21_6_ses-none_drawem_tissue_labels.nii.gz"
-
+t2_postfix = "T2w_restore_brain.nii.gz"
+label_postfix = "drawem_tissue_labels.nii.gz"
 
 
 def read_fn(file_references, mode, params=None):
@@ -43,11 +42,12 @@ def read_fn(file_references, mode, params=None):
 
     for f in file_references:
         subject_id = f[0]
-        img_fn = f[1]
+        img_path = f[1]
+        img_prefix = f[2]
 
         # Read the image nii with sitk and keep the pointer to the sitk.Image of an input
         # print(os.getcwd())
-        t2_sitk = sitk.ReadImage(str(os.path.join(img_fn, t2_name)))
+        t2_sitk = sitk.ReadImage(str(os.path.join(img_path, img_prefix, t2_postfix)))
         t2 = sitk.GetArrayFromImage(t2_sitk)
 
         # Normalise volume images
@@ -63,7 +63,8 @@ def read_fn(file_references, mode, params=None):
                    'sitk': t2_sitk,
                    'subject_id': subject_id}
 
-        lbl = sitk.GetArrayFromImage(sitk.ReadImage(str(os.path.join(img_fn, label_name)))).astype(np.int32)
+        lbl = sitk.GetArrayFromImage(sitk.ReadImage(str(os.path.join(img_path, img_prefix, label_postfix)))).astype(
+            np.int32)
 
         # Augment if in training
         if mode == tf.estimator.ModeKeys.TRAIN:

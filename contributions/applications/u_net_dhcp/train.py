@@ -22,7 +22,7 @@ EVAL_STEPS = 1
 NUM_CLASSES = 10
 NUM_CHANNELS = 1
 
-NUM_FEATURES_IN_SUMMARIES = min(4, NUM_CHANNELS)
+# NUM_FEATURES_IN_SUMMARIES = min(4, NUM_CHANNELS)
 
 BATCH_SIZE = 8
 SHUFFLE_CACHE_SIZE = 32
@@ -199,12 +199,12 @@ if __name__ == '__main__':
     # Set up argument parser
     parser = argparse.ArgumentParser(description="Contribution: dHCP GM segmentation training script")
     parser.add_argument('--run_validation', default=True)
-    parser.add_argument('--restart', default=True, action='store_true')
+    parser.add_argument('--restart', default=False, action='store_true')
     parser.add_argument('--verbose', default=False, action='store_true')
     parser.add_argument('--cuda_devices', '-c', default='0')
 
-    parser.add_argument('--model_path', '-p', default='/Users/sambudd2/PycharmProjects/DLTK/contributions/applications/u_net_dhcp/dhcp_segmentation/')
-    parser.add_argument('--train_csv', default='dhcp_training_data.csv')
+    parser.add_argument('--model_path', '-p', default='insert appriate')
+    parser.add_argument('--train_csv', default='experiment_1.csv')
 
     args = parser.parse_args()
 
