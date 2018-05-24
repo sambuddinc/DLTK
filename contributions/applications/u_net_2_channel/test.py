@@ -86,17 +86,17 @@ def predict(args):
         results.append(res_row)
 
     df = pd.DataFrame(results, columns=["ID", "Dice", "Time", "Segmentation Path"])
-    df.to_csv()
+    df.to_csv(os.path.join(args.model_path, "results_exp2.csv", index=False)
 
 
 if __name__ == '__main__':
     # Set up argument parser
     parser = argparse.ArgumentParser(description='dhcp brain segmentation deploy')
     parser.add_argument('--verbose', default=False, action='store_true')
-    parser.add_argument('--cuda_devices', '-c', default='0')
+    parser.add_argument('--cuda_devices', '-c', default='1')
 
-    parser.add_argument('--model_path', '-p', default='insert appropriate')
-    parser.add_argument('--train_csv', default='experiment_1.csv')
+    parser.add_argument('--model_path', '-p', default='/home/sb17/DLTK/contributions/applications/u_net_2_channel/dhcp_segmentation_2channel_2class_model')
+    parser.add_argument('--train_csv', default='experiment_2.csv')
 
     args = parser.parse_args()
 
