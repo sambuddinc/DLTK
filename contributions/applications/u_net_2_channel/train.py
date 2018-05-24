@@ -204,7 +204,7 @@ if __name__ == '__main__':
     parser.add_argument('--cuda_devices', '-c', default='0')
 
     parser.add_argument('--model_path', '-p', default='/Users/sambudd2/PycharmProjects/DLTK/contributions/applications/u_net_2_channel/dhcp_segmentation_2channel_2class_model/')
-    parser.add_argument('--train_csv', default='/Users/sambudd2/PycharmProjects/DLTK/contributions/data/dhcp_mr_brains/automatic/experiment_2_3.csv')
+    parser.add_argument('--train_csv', default='/Users/sambudd2/PycharmProjects/DLTK/contributions/data/dhcp_mr_brains/automatic/experiment_2.csv')
 
     args = parser.parse_args()
 
