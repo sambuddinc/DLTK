@@ -88,6 +88,7 @@ def model_fn(features, labels, mode, params):
 
     # 4.1 (optional) create custom image summaries for tensorboard
     my_image_summaries = {'feat_t2': features['x'][0, 0, :, :, 0],
+                          'feat_t1': features['x'][0, 0, :, :, 1],
                           'labels': tf.cast(labels['y'], tf.float32)[0, 0, :, :],
                           'predictions': tf.cast(net_output_ops['y_'], tf.float32)[0, 0, :, :]}
 
