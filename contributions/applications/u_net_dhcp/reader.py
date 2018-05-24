@@ -15,7 +15,7 @@ from dltk.io.preprocessing import whitening
 
 t2_postfix = "T2w_restore_brain.nii.gz"
 label_postfix = "drawem_tissue_labels.nii.gz"
-
+NUM_CLASSES = 2
 
 def read_fn(file_references, mode, params=None):
     """A custom python read function for interfacing with nii image files.
@@ -47,7 +47,7 @@ def read_fn(file_references, mode, params=None):
 
         # Read the image nii with sitk and keep the pointer to the sitk.Image of an input
         # print(os.getcwd())
-        t2_sitk = sitk.ReadImage(str(os.path.join(img_path, img_prefix, t2_postfix)))
+        t2_sitk = sitk.ReadImage(str(img_path + img_prefix + t2_postfix))
         t2 = sitk.GetArrayFromImage(t2_sitk)
 
         # Normalise volume images
@@ -63,9 +63,13 @@ def read_fn(file_references, mode, params=None):
                    'sitk': t2_sitk,
                    'subject_id': subject_id}
 
-        lbl = sitk.GetArrayFromImage(sitk.ReadImage(str(os.path.join(img_path, img_prefix, label_postfix)))).astype(
+        lbl = sitk.GetArrayFromImage(sitk.ReadImage(str(img_path + img_prefix + label_postfix))).astype(
             np.int32)
-
+        #print(lbl.shape)
+        # Remove other class labels to leave just the grey matter
+        #non_cortical_indices = lbl != 2
+        lbl[lbl != 1.] = 0.
+        #print(lbl.shape)
         # Augment if in training
         if mode == tf.estimator.ModeKeys.TRAIN:
             images, lbl = _augment(images, lbl)
@@ -83,7 +87,7 @@ def read_fn(file_references, mode, params=None):
                 label=lbl,
                 example_size=example_size,
                 n_examples=n_examples,
-                classes=10)
+                classes=NUM_CLASSES)
             # examples = extract_random_example_array([images, lbl],
             #                                         example_size=example_size,
             #                                         n_examples=n_examples)

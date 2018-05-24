@@ -19,13 +19,13 @@ from reader import read_fn
 EVAL_EVERY_N_STEPS = 100
 EVAL_STEPS = 1
 
-NUM_CLASSES = 10
+NUM_CLASSES = 2
 NUM_CHANNELS = 1
 
 # NUM_FEATURES_IN_SUMMARIES = min(4, NUM_CHANNELS)
 
-BATCH_SIZE = 8
-SHUFFLE_CACHE_SIZE = 32
+BATCH_SIZE = 16
+SHUFFLE_CACHE_SIZE = 64
 
 MAX_STEPS = 50000
 
@@ -124,8 +124,8 @@ def train(args):
         keep_default_na=False,
         na_values=[]).as_matrix()
 
-    train_filenames = all_filenames[1:4]
-    val_filenames = all_filenames[4:5]
+    train_filenames = all_filenames[1:400]
+    val_filenames = all_filenames[400:450]
 
     # Set up a data reader to handle the file i/o.
     reader_params = {'n_examples': 16,
@@ -199,12 +199,12 @@ if __name__ == '__main__':
     # Set up argument parser
     parser = argparse.ArgumentParser(description="Contribution: dHCP GM segmentation training script")
     parser.add_argument('--run_validation', default=True)
-    parser.add_argument('--restart', default=False, action='store_true')
+    parser.add_argument('--restart', default=True, action='store_true')
     parser.add_argument('--verbose', default=False, action='store_true')
-    parser.add_argument('--cuda_devices', '-c', default='0')
+    parser.add_argument('--cuda_devices', '-c', default='1')
 
-    parser.add_argument('--model_path', '-p', default='insert appriate')
-    parser.add_argument('--train_csv', default='experiment_1.csv')
+    parser.add_argument('--model_path', '-p', default='/home/sb17/DLTK/contributions/applications/u_net_dhcp/dhcp_segmentation_2class_model/')
+    parser.add_argument('--train_csv', default='/home/sb17/DLTK/contributions/applications/u_net_dhcp/experiment_1.csv')
 
     args = parser.parse_args()
 
