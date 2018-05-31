@@ -202,10 +202,10 @@ if __name__ == '__main__':
     parser.add_argument('--run_validation', default=True)
     parser.add_argument('--restart', default=False, action='store_true')
     parser.add_argument('--verbose', default=False, action='store_true')
-    parser.add_argument('--cuda_devices', '-c', default='1')
+    parser.add_argument('--cuda_devices', '-c', default='7')
 
-    parser.add_argument('--model_path', '-p', default='/Users/sambudd2/PycharmProjects/DLTK/contributions/applications/u_net_2_channel/dhcp_segmentation_2channel_2class_model/')
-    parser.add_argument('--train_csv', default='/Users/sambudd2/PycharmProjects/DLTK/contributions/data/dhcp_mr_brains/automatic/experiment_2.csv')
+    parser.add_argument('--model_path', '-p', default='/home/sb17/DLTK/contributions/applications/u_net_2_channel/dhcp_segmentation_2channel_2class_model/')
+    parser.add_argument('--train_csv', default='/home/sb17/DLTK/contributions/applications/u_net_2_channel/experiment_2.csv')
 
     args = parser.parse_args()
 
