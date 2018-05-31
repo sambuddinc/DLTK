@@ -100,6 +100,7 @@ def read_fn(file_references, mode, params=None):
                        'subject_id': subject_id}
         else:
             print("extracting full images (not training examples)")
+            images = images.reshape([lbl.shape[0],lbl.shape[1], lbl.shape[2], 1])
             yield {'features': {'x': images},
                    'labels': {'y': lbl},
                    'sitk': t2_sitk,
