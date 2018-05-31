@@ -19,7 +19,7 @@ from dltk.utils import sliding_window_segmentation_inference
 from reader import read_fn
 
 READER_PARAMS = {'extract_examples': False}
-N_VALIDATION_SUBJECTS = 89
+N_VALIDATION_SUBJECTS = 52
 
 def predict(args):
     file_names = pd.read_csv(
@@ -97,8 +97,8 @@ if __name__ == '__main__':
     parser.add_argument('--verbose', default=False, action='store_true')
     parser.add_argument('--cuda_devices', '-c', default='0')
 
-    parser.add_argument('--model_path', '-p', default='/home/sb17/DLTK/contributions/applications/u_net_dhcp/dhcp_segmentation_2class_model')
-    parser.add_argument('--csv', default='/home/sb17/DLTK/contributions/applications/u_net_dhcp/experiment_1.csv')
+    parser.add_argument('--model_path', '-p', default='/home/sb17/DLTK/contributions/applications/experiment1/experiment1_model')
+    parser.add_argument('--csv', default='/home/sb17/DLTK/contributions/applications/experiment1/experiment_1.csv')
 
     args = parser.parse_args()
 

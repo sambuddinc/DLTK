@@ -19,7 +19,7 @@ from dltk.utils import sliding_window_segmentation_inference
 from reader import read_fn
 
 READER_PARAMS = {'extract_examples': False}
-N_VALIDATION_SUBJECTS = 50
+N_VALIDATION_SUBJECTS = 52
 
 def predict(args):
     file_names = pd.read_csv(
@@ -44,6 +44,7 @@ def predict(args):
     num_classes = y_prob.get_shape().as_list()[-1]
 
     results = []
+
     # Iterate through the files, predict on the full volumes and compute a Dice
     # coefficient
     for output in read_fn(file_references=file_names,
@@ -61,7 +62,7 @@ def predict(args):
             session=my_predictor.session,
             ops_list=[y_prob],
             sample_dict={my_predictor._feed_tensors['x']: img},
-            batch_size=32)[0]
+            batch_size=16)[0]
 
         # Calculate the prediction from the probabilities
         pred = np.argmax(pred, -1)
@@ -84,8 +85,8 @@ def predict(args):
         res_row = [output['subject_id'], dsc, time.time() - t0, output_fn]
         results.append(res_row)
 
-    df = pd.DataFrame(results, columns=["ID", "DICE", "Time", "Segmentation path"])
-    df.to_csv(os.path.join(args.model_path, "results_experiment_1.csv"), index = False)
+    df = pd.DataFrame(results, columns=["ID", "Dice", "Time", "Segmentation Path"])
+    df.to_csv(os.path.join(args.model_path, "results_exp2.csv", index=False))
 
 
 if __name__ == '__main__':
@@ -94,8 +95,8 @@ if __name__ == '__main__':
     parser.add_argument('--verbose', default=False, action='store_true')
     parser.add_argument('--cuda_devices', '-c', default='1')
 
-    parser.add_argument('--model_path', '-p', default='/home/sb17/DLTK/contributions/applications/u_net_dhcp/dhcp_segmentation_2class_model/')
-    parser.add_argument('--train_csv', default='experiment_1.csv')
+    parser.add_argument('--model_path', '-p', default='/home/sb17/DLTK/contributions/applications/experiment2/experiment2_model')
+    parser.add_argument('--train_csv', default='/home/sb17/DLTK/contributions/applications/experiment2/experiment_2.csv')
 
     args = parser.parse_args()
 

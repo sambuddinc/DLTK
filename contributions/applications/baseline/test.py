@@ -44,28 +44,30 @@ def predict(args):
     num_classes = y_prob.get_shape().as_list()[-1]
 
     results = []
-
+    print("Preparing to predict")
     # Iterate through the files, predict on the full volumes and compute a Dice
     # coefficient
     for output in read_fn(file_references=file_names,
                           mode=tf.estimator.ModeKeys.EVAL,
                           params=READER_PARAMS):
         t0 = time.time()
-
+        print("predicting an entry")
         # Parse the read function output and add a dummy batch dimension as
         # required
         img = np.expand_dims(output['features']['x'], axis=0)
         lbl = np.expand_dims(output['labels']['y'], axis=0)
-
+        print("exapanded dims")
         # Do a sliding window inference with our DLTK wrapper
         pred = sliding_window_segmentation_inference(
             session=my_predictor.session,
             ops_list=[y_prob],
             sample_dict={my_predictor._feed_tensors['x']: img},
-            batch_size=32)[0]
+            batch_size=16)[0]
 
         # Calculate the prediction from the probabilities
         pred = np.argmax(pred, -1)
+
+        print("performed prediction on entry")
 
         # Calculate the Dice coefficient
         dsc = metrics.dice(pred, lbl, num_classes)[1:].mean()
@@ -86,17 +88,17 @@ def predict(args):
         results.append(res_row)
 
     df = pd.DataFrame(results, columns=["ID", "Dice", "Time", "Segmentation Path"])
-    df.to_csv(os.path.join(args.model_path, "results_exp2.csv", index=False))
+    df.to_csv(os.path.join(args.model_path, 'results_baseline.csv'), index=False)
 
 
 if __name__ == '__main__':
     # Set up argument parser
     parser = argparse.ArgumentParser(description='dhcp brain segmentation deploy')
     parser.add_argument('--verbose', default=False, action='store_true')
-    parser.add_argument('--cuda_devices', '-c', default='1')
+    parser.add_argument('--cuda_devices', '-c', default='0')
 
-    parser.add_argument('--model_path', '-p', default='/home/sb17/DLTK/contributions/applications/u_net_2_channel/dhcp_segmentation_2channel_2class_model')
-    parser.add_argument('--train_csv', default='experiment_2.csv')
+    parser.add_argument('--model_path', '-p', default='/home/sb17/DLTK/contributions/applications/baseline/baseline_model')
+    parser.add_argument('--csv', default='/home/sb17/DLTK/contributions/applications/baseline/experiment_baseline.csv')
 
     args = parser.parse_args()
 

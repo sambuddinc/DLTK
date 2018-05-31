@@ -20,7 +20,7 @@ EVAL_EVERY_N_STEPS = 100
 EVAL_STEPS = 1
 
 NUM_CLASSES = 2
-NUM_CHANNELS = 1
+NUM_CHANNELS = 2
 
 # NUM_FEATURES_IN_SUMMARIES = min(4, NUM_CHANNELS)
 
@@ -88,6 +88,7 @@ def model_fn(features, labels, mode, params):
 
     # 4.1 (optional) create custom image summaries for tensorboard
     my_image_summaries = {'feat_t2': features['x'][0, 0, :, :, 0],
+                          'feat_t1': features['x'][0, 0, :, :, 1],
                           'labels': tf.cast(labels['y'], tf.float32)[0, 0, :, :],
                           'predictions': tf.cast(net_output_ops['y_'], tf.float32)[0, 0, :, :]}
 
@@ -125,7 +126,7 @@ def train(args):
         na_values=[]).as_matrix()
 
     train_filenames = all_filenames[1:400]
-    val_filenames = all_filenames[400:450]
+    val_filenames = all_filenames[400:405]
 
     # Set up a data reader to handle the file i/o.
     reader_params = {'n_examples': 16,
@@ -201,10 +202,10 @@ if __name__ == '__main__':
     parser.add_argument('--run_validation', default=True)
     parser.add_argument('--restart', default=False, action='store_true')
     parser.add_argument('--verbose', default=False, action='store_true')
-    parser.add_argument('--cuda_devices', '-c', default='1')
+    parser.add_argument('--cuda_devices', '-c', default='0')
 
-    parser.add_argument('--model_path', '-p', default='/home/sb17/DLTK/contributions/applications/u_net_dhcp/dhcp_segmentation_2class_model/')
-    parser.add_argument('--train_csv', default='/home/sb17/DLTK/contributions/applications/u_net_dhcp/experiment_1.csv')
+    parser.add_argument('--model_path', '-p', default='/home/sb17/DLTK/contributions/applications/experiment2/experiment2_model/')
+    parser.add_argument('--train_csv', default='/home/sb17/DLTK/contributions/applications/experiment2/experiment_2.csv')
 
     args = parser.parse_args()
 
