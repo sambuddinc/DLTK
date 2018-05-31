@@ -202,10 +202,10 @@ if __name__ == '__main__':
     parser.add_argument('--run_validation', default=True)
     parser.add_argument('--restart', default=False, action='store_true')
     parser.add_argument('--verbose', default=False, action='store_true')
-    parser.add_argument('--cuda_devices', '-c', default='0')
+    parser.add_argument('--cuda_devices', '-c', default='2')
 
     parser.add_argument('--model_path', '-p', default='/home/sb17/DLTK/contributions/applications/experiment2/experiment2_model/')
-    parser.add_argument('--train_csv', default='/home/sb17/DLTK/contributions/applications/experiment2/experiment_2.csv')
+    parser.add_argument('--train_csv', default='/home/sb17/DLTK/contributions/applications/experiment2/experiment_1.csv')
 
     args = parser.parse_args()
 

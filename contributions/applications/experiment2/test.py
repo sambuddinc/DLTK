@@ -96,7 +96,7 @@ if __name__ == '__main__':
     parser.add_argument('--cuda_devices', '-c', default='1')
 
     parser.add_argument('--model_path', '-p', default='/home/sb17/DLTK/contributions/applications/experiment2/experiment2_model')
-    parser.add_argument('--train_csv', default='/home/sb17/DLTK/contributions/applications/experiment2/experiment_2.csv')
+    parser.add_argument('--csv', default='/home/sb17/DLTK/contributions/applications/experiment2/experiment_1.csv')
 
     args = parser.parse_args()
 

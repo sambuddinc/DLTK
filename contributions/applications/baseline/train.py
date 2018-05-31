@@ -201,9 +201,9 @@ if __name__ == '__main__':
     parser.add_argument('--run_validation', default=True)
     parser.add_argument('--restart', default=False, action='store_true')
     parser.add_argument('--verbose', default=False, action='store_true')
-    parser.add_argument('--cuda_devices', '-c', default='1')
+    parser.add_argument('--cuda_devices', '-c', default='0')
 
-    parser.add_argument('--model_path', '-p', default='/home/sb17/DLTK/contributions/applications/baseline/dhcp_segmentation_2class_model/')
+    parser.add_argument('--model_path', '-p', default='/home/sb17/DLTK/contributions/applications/baseline/baseline_model/')
     parser.add_argument('--train_csv', default='/home/sb17/DLTK/contributions/applications/baseline/experiment_baseline.csv')
 
     args = parser.parse_args()
