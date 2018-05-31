@@ -14,14 +14,19 @@ def is_entry_manually_annotated(subject_id):
     return any(subj_found)
 
 
-def get_row_for_manual_entry(id, subject_id):
+def get_row_for_manual_entry(sid, subject_id):
     files = os.listdir(man_dir)
     subj_found = [subject_id in x and 'excl' not in x and 'skel' not in x and 'over' not in x for x in files]
-    file_name = files[subj_found][0]
-    print(file_name)
-    parts = file_name.split('-')
-    subject_row = [id, parts[0], parts[1], parts[2][1:], man_dir + file_name]
-    return subject_row
+    if any(subj_found):
+      print("Found entry for: " + str(subject_id))
+      file_name = [x for x in files if subject_id in x and 'excl' not in x and 'skel' not in x and 'over' not in x][0]
+      print(file_name)
+      parts = file_name.split('-')
+      subject_row = [sid, parts[0], parts[1], parts[2][1:], man_dir + file_name]
+      return subject_row
+    else:
+      print("Should not see this")
+      return []
 
 
 # Experiment 3: T2 -> manual, then maybe t1 aswell
@@ -43,7 +48,9 @@ for i, row in enumerate(all_data):
             if is_entry_manually_annotated(subj_id):
                 subj_row = get_row_for_manual_entry(i, subj_id)
                 # subj_row = [i + 1, subj_data_path, subj_data_prefix]
+                subj_row.append(subj_data_path)
+                subj_row.append(subj_data_prefix)
                 output_data.append(subj_row)
 
-df = pd.DataFrame(output_data, columns=["subject_id", "path", "prefix"])
-df.to_csv(data_dir + "experiment_2.csv", index=False)
+df = pd.DataFrame(output_data, columns=["id", "subject_id", "session", "slice","man_path", "subj_data_path","subj_data_prefix"])
+df.to_csv(man_dir + "experiment_3.csv", index=False)
