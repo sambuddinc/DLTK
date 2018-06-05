@@ -73,8 +73,12 @@ def predict(args):
         # Save the file as .nii.gz using the header information from the
         # original sitk image
         output_fn = os.path.join(args.model_path, '{}_seg.nii.gz'.format(output['subject_id']))
-
-        new_sitk = sitk.GetImageFromArray(pred[0].astype(np.int32))
+        cur_shape = sitk.GetArrayFromImage(output['sitk']).shape
+        
+        new_stack = np.zeros(cur_shape)
+        new_stack[output['slice_index'], :, :] = pred[0]
+        
+        new_sitk = sitk.GetImageFromArray(new_stack.astype(np.int32))
         new_sitk.CopyInformation(output['sitk'])
 
         sitk.WriteImage(new_sitk, output_fn)
@@ -86,14 +90,14 @@ def predict(args):
         results.append(res_row)
 
     df = pd.DataFrame(results, columns=["ID", "Dice", "Time", "Segmentation Path"])
-    df.to_csv(os.path.join(args.model_path, "results_exp2.csv", index=False))
+    df.to_csv(os.path.join(args.model_path, "results_exp2.csv"), index=False)
 
 
 if __name__ == '__main__':
     # Set up argument parser
     parser = argparse.ArgumentParser(description='dhcp brain segmentation deploy')
     parser.add_argument('--verbose', default=False, action='store_true')
-    parser.add_argument('--cuda_devices', '-c', default='7')
+    parser.add_argument('--cuda_devices', '-c', default='1')
 
     parser.add_argument('--model_path', '-p', default='/home/sb17/DLTK/contributions/applications/experiment3/experiment3_model')
     parser.add_argument('--csv', default='/home/sb17/DLTK/contributions/applications/experiment3/experiment_3.csv')
