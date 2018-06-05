@@ -44,7 +44,7 @@ def read_fn(file_references, mode, params=None):
 
     for f in file_references:
         subject_id = f[0]
-        slice_index = f[3]
+        slice_index = int(f[3])
         man_path = f[4]
         img_path = f[5]
         img_prefix = f[6]
@@ -70,7 +70,7 @@ def read_fn(file_references, mode, params=None):
         t1 = whitening(t1)
 
         # Create a 4D multi-sequence image (i.e. [channels, x,y,z])
-        images = np.stack([t2, t1], axis=1).astype(np.float32)
+        images = np.stack([t2,t1], axis=1).astype(np.float32)
 
         if mode == tf.estimator.ModeKeys.PREDICT:
             print("Predict not yet implemented, please try a different mode")
@@ -95,27 +95,37 @@ def read_fn(file_references, mode, params=None):
             # print("extracting training examples (not full images)")
             n_examples = params['n_examples']
             example_size = params['example_size']
-
+            #x = lbl.shape[0]
+            #y = lbl.shape[1]
+            #images = images.reshape([NUM_CHANNELS, x,y])
+            #lbl = lbl.reshape([NUM_CHANNELS, x,y])
+            lbl = lbl.reshape([1, lbl.shape[0], lbl.shape[1]])
             images = images.reshape([lbl.shape[0], lbl.shape[1], lbl.shape[2], NUM_CHANNELS])
 
+            #print(images.shape)
+            #print(lbl.shape)
+            #print(example_size)
             images, lbl = extract_class_balanced_example_array(
                 image=images,
                 label=lbl,
                 example_size=example_size,
                 n_examples=n_examples,
                 classes=2)
-            # examples = extract_random_example_array([images, lbl],
-            #                                         example_size=example_size,
-            #                                         n_examples=n_examples)
-            # images = examples[0]
-            # lbl = examples[1]
+            #print(images.shape)
+            #print(example_size)
+            #examples = extract_random_example_array([images, lbl],
+             #                                        example_size=example_size,
+              #                                       n_examples=n_examples)
+            #images = examples[0]
+            #lbl = examples[1]
 
             for e in range(n_examples):
+                #print(images[e].shape)
                 yield {'features': {'x': images[e].astype(np.float32)},
                        'labels': {'y': lbl[e].astype(np.int32)},
                        'subject_id': subject_id}
         else:
-            images = images.reshape([lbl.shape[0], lbl.shape[1], lbl.shape[2], NUM_CHANNELS])
+            #images = images.reshape([lbl.shape[0], lbl.shape[1], lbl.shape[2], NUM_CHANNELS])
             print("extracting full images (not training examples)")
             yield {'features': {'x': images},
                    'labels': {'y': lbl},

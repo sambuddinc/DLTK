@@ -95,7 +95,7 @@ if __name__ == '__main__':
     # Set up argument parser
     parser = argparse.ArgumentParser(description='dhcp brain segmentation deploy')
     parser.add_argument('--verbose', default=False, action='store_true')
-    parser.add_argument('--cuda_devices', '-c', default='0')
+    parser.add_argument('--cuda_devices', '-c', default='1')
 
     parser.add_argument('--model_path', '-p', default='/home/sb17/DLTK/contributions/applications/experiment1/experiment1_model')
     parser.add_argument('--csv', default='/home/sb17/DLTK/contributions/applications/experiment1/experiment_1.csv')

@@ -130,7 +130,7 @@ def train(args):
 
     # Set up a data reader to handle the file i/o.
     reader_params = {'n_examples': 16,
-                     'example_size': [1, 64, 64],
+                     'example_size': [2, 64, 64],
                      'extract_examples': True}
     reader_example_shapes = {'features': {'x': reader_params['example_size'] + [NUM_CHANNELS, ]},
                              'labels': {'y': reader_params['example_size']}}
