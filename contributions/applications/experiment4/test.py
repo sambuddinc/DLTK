@@ -64,7 +64,13 @@ def predict(args):
             sample_dict={my_predictor._feed_tensors['x']: img},
             batch_size=16)[0]
 
+        print(pred.shape)
+        print(pred[0].shape)
+        print(pred[0, 0, output['slice_index'], 0])
+
         # Calculate the prediction from the probabilities
+        conf = np.sum(np.argmax(pred))
+        print(conf)
         pred = np.argmax(pred, -1)
 
         # Calculate the Dice coefficient
@@ -73,8 +79,11 @@ def predict(args):
         # Save the file as .nii.gz using the header information from the
         # original sitk image
         output_fn = os.path.join(args.model_path, '{}_seg.nii.gz'.format(output['subject_id']))
+        cur_shape = sitk.GetArrayFromImage(output['sitk']).shape
 
-        new_sitk = sitk.GetImageFromArray(pred[0].astype(np.int32))
+        new_stack = np.zeros(cur_shape)
+        new_stack[output['slice_index'], :, :] = pred[0]
+        new_sitk = sitk.GetImageFromArray(new_stack.astype(np.int32))
         new_sitk.CopyInformation(output['sitk'])
 
         sitk.WriteImage(new_sitk, output_fn)
@@ -86,7 +95,7 @@ def predict(args):
         results.append(res_row)
 
     df = pd.DataFrame(results, columns=["ID", "Dice", "Time", "Segmentation Path"])
-    df.to_csv(os.path.join(args.model_path, "results_exp2.csv", index=False))
+    df.to_csv(os.path.join(args.model_path, "results_exp2.csv"), index=False)
 
 
 if __name__ == '__main__':

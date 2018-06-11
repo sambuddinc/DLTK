@@ -133,6 +133,7 @@ def read_fn(file_references, mode, params=None):
             yield {'features': {'x': images},
                    'labels': {'y': lbl},
                    'sitk': t2_sitk,
-                   'subject_id': subject_id}
+                   'subject_id': subject_id,
+                   'slice_index': slice_index}
 
     return
