@@ -43,6 +43,11 @@ def predict(args):
     y_prob = my_predictor._fetch_tensors['y_prob']
     num_classes = y_prob.get_shape().as_list()[-1]
 
+    # EDIT: Fetch the feature vector op of the trained network
+    logits = my_predictor._fetch_tensors['logits']
+    print("Logits shape?")
+    print(logits.get_shape().as_list())
+
     results = []
     print("Preparing to predict")
     # Iterate through the files, predict on the full volumes and compute a Dice
@@ -63,6 +68,18 @@ def predict(args):
             ops_list=[y_prob],
             sample_dict={my_predictor._feed_tensors['x']: img},
             batch_size=16)[0]
+
+        features = sliding_window_segmentation_inference(
+            session=my_predictor.session,
+            ops_list=[logits],
+            sample_dict={my_predictor._feed_tensors['x']: img},
+            batch_size=16)[0]
+
+        print("Features: ============================================")
+        print(features.shape)
+        print(features)
+        print("Pred $$$$$$$$$$$$$$$$$$$$")
+        print(pred.shape)
 
         # Calculate the prediction from the probabilities
         pred = np.argmax(pred, -1)
