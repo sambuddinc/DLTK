@@ -70,7 +70,7 @@ def read_fn(file_references, mode, params=None):
         t1 = whitening(t1)
 
         # Create a 4D multi-sequence image (i.e. [channels, x,y,z])
-        images = np.stack([t2,t1], axis=1).astype(np.float32)
+        images = np.stack([t2,t1], axis=-1).astype(np.float32)
 
         if mode == tf.estimator.ModeKeys.PREDICT:
             print("Predict not yet implemented, please try a different mode")

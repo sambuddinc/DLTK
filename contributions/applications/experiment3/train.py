@@ -204,7 +204,7 @@ if __name__ == '__main__':
     parser.add_argument('--verbose', default=False, action='store_true')
     parser.add_argument('--cuda_devices', '-c', default='7')
 
-    parser.add_argument('--model_path', '-p', default='/home/sb17/DLTK/contributions/applications/experiment3/experiment3_model/')
+    parser.add_argument('--model_path', '-p', default='/home/sb17/DLTK/contributions/applications/experiment3/experiment3_model_2/')
     parser.add_argument('--train_csv', default='/home/sb17/DLTK/contributions/applications/experiment3/experiment_3.csv')
 
     args = parser.parse_args()
