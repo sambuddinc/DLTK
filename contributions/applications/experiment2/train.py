@@ -200,11 +200,11 @@ if __name__ == '__main__':
     # Set up argument parser
     parser = argparse.ArgumentParser(description="Contribution: dHCP GM segmentation training script")
     parser.add_argument('--run_validation', default=True)
-    parser.add_argument('--restart', default=False, action='store_true')
+    parser.add_argument('--restart', default=True, action='store_true')
     parser.add_argument('--verbose', default=False, action='store_true')
-    parser.add_argument('--cuda_devices', '-c', default='2')
+    parser.add_argument('--cuda_devices', '-c', default='1')
 
-    parser.add_argument('--model_path', '-p', default='/home/sb17/DLTK/contributions/applications/experiment2/experiment2_model/')
+    parser.add_argument('--model_path', '-p', default='/home/sb17/DLTK/contributions/applications/experiment2/experiment2_model_3/')
     parser.add_argument('--train_csv', default='/home/sb17/DLTK/contributions/applications/experiment2/experiment_1.csv')
 
     args = parser.parse_args()

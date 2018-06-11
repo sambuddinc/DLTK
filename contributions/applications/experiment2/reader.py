@@ -63,7 +63,7 @@ def read_fn(file_references, mode, params=None):
         t1 = whitening(t1)
 
         # Create a 4D multi-sequence image (i.e. [channels, x,y,z])
-        images = np.stack([t2, t1], axis=1).astype(np.float32)
+        images = np.stack([t2, t1], axis=-1).astype(np.float32)
 
         if mode == tf.estimator.ModeKeys.PREDICT:
             print("Predict not yet implemented, please try a different mode")
@@ -76,6 +76,7 @@ def read_fn(file_references, mode, params=None):
             np.int32)
 
         lbl[lbl != 1.] = 0.
+        #lbl = np.stack([lbl, lbl], axis=1).astype(np.float32)
 
         # Augment if in training
         if mode == tf.estimator.ModeKeys.TRAIN:
@@ -87,8 +88,9 @@ def read_fn(file_references, mode, params=None):
             n_examples = params['n_examples']
             example_size = params['example_size']
 
-            images = images.reshape([lbl.shape[0], lbl.shape[1], lbl.shape[2], NUM_CHANNELS])
-
+            #images = images.reshape([lbl.shape[0], lbl.shape[1], lbl.shape[2], NUM_CHANNELS])
+            #print(lbl.shape)
+            #print(images.shape)
             images, lbl = extract_class_balanced_example_array(
                 image=images,
                 label=lbl,
@@ -106,7 +108,7 @@ def read_fn(file_references, mode, params=None):
                        'labels': {'y': lbl[e].astype(np.int32)},
                        'subject_id': subject_id}
         else:
-            images = images.reshape([lbl.shape[0],lbl.shape[1],lbl.shape[2], NUM_CHANNELS])
+            #images = images.reshape([lbl.shape[0],lbl.shape[1],lbl.shape[2], NUM_CHANNELS])
             print("extracting full images (not training examples)")
             yield {'features': {'x': images},
                    'labels': {'y': lbl},
