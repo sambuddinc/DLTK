@@ -45,8 +45,6 @@ def predict(args):
 
     # EDIT: Fetch the feature vector op of the trained network
     logits = my_predictor._fetch_tensors['logits']
-    print("Logits shape?")
-    print(logits.get_shape().as_list())
 
     results = []
     print("Preparing to predict")
@@ -56,12 +54,11 @@ def predict(args):
                           mode=tf.estimator.ModeKeys.EVAL,
                           params=READER_PARAMS):
         t0 = time.time()
-        print("predicting an entry")
+        print("Predicting on an entry")
         # Parse the read function output and add a dummy batch dimension as
         # required
         img = np.expand_dims(output['features']['x'], axis=0)
         lbl = np.expand_dims(output['labels']['y'], axis=0)
-        print("exapanded dims")
         # Do a sliding window inference with our DLTK wrapper
         pred = sliding_window_segmentation_inference(
             session=my_predictor.session,
@@ -75,11 +72,7 @@ def predict(args):
             sample_dict={my_predictor._feed_tensors['x']: img},
             batch_size=16)[0]
 
-        print("Features: ============================================")
-        print(features.shape)
-        print(features)
-        print("Pred $$$$$$$$$$$$$$$$$$$$")
-        print(pred.shape)
+        class_confidences = pred
 
         # Calculate the prediction from the probabilities
         pred = np.argmax(pred, -1)
@@ -88,6 +81,9 @@ def predict(args):
 
         # Calculate the Dice coefficient
         dsc = metrics.dice(pred, lbl, num_classes)[1:].mean()
+
+        # Calculate the cross entropy coeff
+        cross_ent = metrics.crossentropy(features, lbl)
 
         # Save the file as .nii.gz using the header information from the
         # original sitk image
