@@ -66,6 +66,8 @@ def predict(args):
             sample_dict={my_predictor._feed_tensors['x']: img},
             batch_size=16)[0]
 
+        print("Prediction: " + str(pred.shape))
+
         features = sliding_window_segmentation_inference(
             session=my_predictor.session,
             ops_list=[logits],
@@ -76,8 +78,6 @@ def predict(args):
 
         # Calculate the prediction from the probabilities
         pred = np.argmax(pred, -1)
-
-        print("performed prediction on entry")
 
         # Calculate the Dice coefficient
         dsc = metrics.dice(pred, lbl, num_classes)[1:].mean()
@@ -93,15 +93,27 @@ def predict(args):
         new_sitk.CopyInformation(output['sitk'])
 
         sitk.WriteImage(new_sitk, output_fn)
+        
+        # Save the feature vector file as a .nii.gz using header info from origincal sitk
+        print("Features: " + str(features.shape))
+        feature_sitk = sitk.GetImageFromArray(features[0])
+        feature_sitk.CopyInformation(output['sitk'])
+        sitk.WriteImage(feature_sitk, os.path.join(args.model_path, 'ALout', '{}_feat.nii.gz'.format(output['subject_id'])))
+
+        # Save the confidence vector file as a .nii.gz using header info from original stack
+        print("Confidences: " + str(class_confidences.shape))
+        conf_sitk = sitk.GetImageFromArray(class_confidences)
+        conf_sitk.CopyInformation(output['sitk'])
+        sitk.WriteImage(conf_sitk, os.path.join(args.model_path, 'ALout', '{}_conf.nii.gz'.format(output['subject_id'])))
 
         # Print outputs
-        print('Id={}; Dice={:0.4f}; time={:0.2} secs; output_path={};'.format(
-            output['subject_id'], dsc, time.time() - t0, output_fn))
-        res_row = [output['subject_id'], dsc, time.time() - t0, output_fn]
+        print('Id={}; Dice={:0.4f}; CE={:0.4f}; time={:0.2} secs; output_path={};'.format(
+            output['subject_id'], dsc, cross_ent, time.time() - t0, output_fn))
+        res_row = [output['subject_id'], dsc, cross_ent, time.time() - t0, output_fn]
         results.append(res_row)
 
-    df = pd.DataFrame(results, columns=["ID", "Dice", "Time", "Segmentation Path"])
-    df.to_csv(os.path.join(args.model_path, 'results_baseline.csv'), index=False)
+    df = pd.DataFrame(results, columns=["ID", "Dice", "Cross Entropy", "Time", "Segmentation Path"])
+    df.to_csv(os.path.join(args.model_path, 'ALout', 'results_baseline_alfetest.csv'), index=False)
 
 
 if __name__ == '__main__':
