@@ -77,7 +77,7 @@ def predict(args):
 
         print("Features: ============================================")
         print(features.shape)
-        print(features)
+        #print(features)
         print("Pred $$$$$$$$$$$$$$$$$$$$")
         print(pred.shape)
 
@@ -97,6 +97,11 @@ def predict(args):
         new_sitk.CopyInformation(output['sitk'])
 
         sitk.WriteImage(new_sitk, output_fn)
+        
+        # Save the feature vector file as a .nii.gz using header info from origincal sitk
+        feature_sitk = sitk.GetImageFromArray(features[0])
+        feature_sitk.CopyInformation(output['sitk'])
+        sitk.WriteImage(feature_sitk, os.path.join(args.model_path, '{}_feat.nii.gz'.format(output['subject_id'])))
 
         # Print outputs
         print('Id={}; Dice={:0.4f}; time={:0.2} secs; output_path={};'.format(
@@ -105,7 +110,7 @@ def predict(args):
         results.append(res_row)
 
     df = pd.DataFrame(results, columns=["ID", "Dice", "Time", "Segmentation Path"])
-    df.to_csv(os.path.join(args.model_path, 'results_baseline.csv'), index=False)
+    df.to_csv(os.path.join(args.model_path, 'results_baseline_alfetest.csv'), index=False)
 
 
 if __name__ == '__main__':
