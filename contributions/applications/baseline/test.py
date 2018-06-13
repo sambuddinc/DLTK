@@ -83,7 +83,8 @@ def predict(args):
         dsc = metrics.dice(pred, lbl, num_classes)[1:].mean()
 
         # Calculate the cross entropy coeff
-        cross_ent = metrics.crossentropy(features, lbl)
+        #cross_ent = metrics.crossentropy(features, lbl)
+        cross_ent = "error"
 
         # Save the file as .nii.gz using the header information from the
         # original sitk image
@@ -102,13 +103,13 @@ def predict(args):
 
         # Save the confidence vector file as a .nii.gz using header info from original stack
         print("Confidences: " + str(class_confidences.shape))
-        conf_sitk = sitk.GetImageFromArray(class_confidences)
+        conf_sitk = sitk.GetImageFromArray(class_confidences[0])
         conf_sitk.CopyInformation(output['sitk'])
         sitk.WriteImage(conf_sitk, os.path.join(args.model_path, 'ALout', '{}_conf.nii.gz'.format(output['subject_id'])))
 
         # Print outputs
-        print('Id={}; Dice={:0.4f}; CE={:0.4f}; time={:0.2} secs; output_path={};'.format(
-            output['subject_id'], dsc, cross_ent, time.time() - t0, output_fn))
+        print('Id={}; Dice={:0.4f}; time={:0.2} secs; output_path={};'.format(
+            output['subject_id'], dsc, time.time() - t0, output_fn))
         res_row = [output['subject_id'], dsc, cross_ent, time.time() - t0, output_fn]
         results.append(res_row)
 
