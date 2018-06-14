@@ -88,7 +88,6 @@ def model_fn(features, labels, mode, params):
 
     # 4.1 (optional) create custom image summaries for tensorboard
     my_image_summaries = {'feat_t2': features['x'][0, 0, :, :, 0],
-                          #'feat_t1': features['x'][0, 0, :, :, 1],
                           'labels': tf.cast(labels['y'], tf.float32)[0, 0, :, :],
                           'predictions': tf.cast(net_output_ops['y_'], tf.float32)[0, 0, :, :]}
 
@@ -112,7 +111,6 @@ def model_fn(features, labels, mode, params):
 
 
 def train(args):
-    print("training")
     np.random.seed(42)
     tf.set_random_seed(42)
 
@@ -202,9 +200,9 @@ if __name__ == '__main__':
     parser.add_argument('--run_validation', default=True)
     parser.add_argument('--restart', default=False, action='store_true')
     parser.add_argument('--verbose', default=False, action='store_true')
-    parser.add_argument('--cuda_devices', '-c', default='7')
+    parser.add_argument('--cuda_devices', '-c', default='4')
 
-    parser.add_argument('--model_path', '-p', default='/home/sb17/DLTK/contributions/applications/experiment4/experiment4_model/')
+    parser.add_argument('--model_path', '-p', default='/home/sb17/DLTK/contributions/applications/experiment4/experiment4_model_cgm/')
     parser.add_argument('--train_csv', default='/home/sb17/DLTK/contributions/applications/experiment4/experiment_3.csv')
 
     args = parser.parse_args()

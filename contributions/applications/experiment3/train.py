@@ -112,7 +112,6 @@ def model_fn(features, labels, mode, params):
 
 
 def train(args):
-    print("training")
     np.random.seed(42)
     tf.set_random_seed(42)
 
@@ -130,7 +129,7 @@ def train(args):
 
     # Set up a data reader to handle the file i/o.
     reader_params = {'n_examples': 16,
-                     'example_size': [1, 64, 64],
+                     'example_size': [2, 64, 64],
                      'extract_examples': True}
     reader_example_shapes = {'features': {'x': reader_params['example_size'] + [NUM_CHANNELS, ]},
                              'labels': {'y': reader_params['example_size']}}
@@ -202,9 +201,9 @@ if __name__ == '__main__':
     parser.add_argument('--run_validation', default=True)
     parser.add_argument('--restart', default=True, action='store_true')
     parser.add_argument('--verbose', default=False, action='store_true')
-    parser.add_argument('--cuda_devices', '-c', default='7')
+    parser.add_argument('--cuda_devices', '-c', default='3')
 
-    parser.add_argument('--model_path', '-p', default='/home/sb17/DLTK/contributions/applications/experiment3/experiment3_model_2/')
+    parser.add_argument('--model_path', '-p', default='/home/sb17/DLTK/contributions/applications/experiment3/experiment3_model_cgm/')
     parser.add_argument('--train_csv', default='/home/sb17/DLTK/contributions/applications/experiment3/experiment_3.csv')
 
     args = parser.parse_args()

@@ -54,7 +54,7 @@ def read_fn(file_references, mode, params=None):
         t2 = whitening(t2)
 
         # Create a 4D multi-sequence image (i.e. [channels, x,y,z])
-        images = np.stack([t2], axis=1).astype(np.float32)
+        images = np.stack([t2], axis=-1).astype(np.float32)
 
         if mode == tf.estimator.ModeKeys.PREDICT:
             print("Predict not yet implemented, please try a different mode")
@@ -65,11 +65,11 @@ def read_fn(file_references, mode, params=None):
 
         lbl = sitk.GetArrayFromImage(sitk.ReadImage(str(img_path + img_prefix + label_postfix))).astype(
             np.int32)
-        #print(lbl.shape)
+
         # Remove other class labels to leave just the grey matter
-        #non_cortical_indices = lbl != 2
-        lbl[lbl != 1.] = 0.
-        #print(lbl.shape)
+
+        lbl[lbl != 2.] = 0.
+
         # Augment if in training
         if mode == tf.estimator.ModeKeys.TRAIN:
             images, lbl = _augment(images, lbl)
@@ -80,7 +80,7 @@ def read_fn(file_references, mode, params=None):
             n_examples = params['n_examples']
             example_size = params['example_size']
 
-            images = images.reshape([lbl.shape[0], lbl.shape[1], lbl.shape[2], 1])
+            # images = images.reshape([lbl.shape[0], lbl.shape[1], lbl.shape[2], 1])
 
             images, lbl = extract_class_balanced_example_array(
                 image=images,
@@ -99,8 +99,8 @@ def read_fn(file_references, mode, params=None):
                        'labels': {'y': lbl[e].astype(np.int32)},
                        'subject_id': subject_id}
         else:
-            print("extracting full images (not training examples)")
-            images = images.reshape([lbl.shape[0],lbl.shape[1], lbl.shape[2], 1])
+            # print("extracting full images (not training examples)")
+            # images = images.reshape([lbl.shape[0],lbl.shape[1], lbl.shape[2], 1])
             yield {'features': {'x': images},
                    'labels': {'y': lbl},
                    'sitk': t2_sitk,

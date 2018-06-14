@@ -51,12 +51,10 @@ def predict(args):
                           mode=tf.estimator.ModeKeys.EVAL,
                           params=READER_PARAMS):
         t0 = time.time()
-        print("predicting an entry")
         # Parse the read function output and add a dummy batch dimension as
         # required
         img = np.expand_dims(output['features']['x'], axis=0)
         lbl = np.expand_dims(output['labels']['y'], axis=0)
-        print("exapanded dims")
         # Do a sliding window inference with our DLTK wrapper
         pred = sliding_window_segmentation_inference(
             session=my_predictor.session,
@@ -66,8 +64,6 @@ def predict(args):
 
         # Calculate the prediction from the probabilities
         pred = np.argmax(pred, -1)
-
-        print("performed prediction on entry")
 
         # Calculate the Dice coefficient
         dsc = metrics.dice(pred, lbl, num_classes)[1:].mean()
@@ -97,7 +93,7 @@ if __name__ == '__main__':
     parser.add_argument('--verbose', default=False, action='store_true')
     parser.add_argument('--cuda_devices', '-c', default='1')
 
-    parser.add_argument('--model_path', '-p', default='/home/sb17/DLTK/contributions/applications/experiment1/experiment1_model')
+    parser.add_argument('--model_path', '-p', default='/home/sb17/DLTK/contributions/applications/experiment1/experiment1_model_cgm')
     parser.add_argument('--csv', default='/home/sb17/DLTK/contributions/applications/experiment1/experiment_1.csv')
 
     args = parser.parse_args()

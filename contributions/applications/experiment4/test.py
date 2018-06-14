@@ -64,13 +64,13 @@ def predict(args):
             sample_dict={my_predictor._feed_tensors['x']: img},
             batch_size=16)[0]
 
-        print(pred.shape)
-        print(pred[0].shape)
-        print(pred[0, 0, output['slice_index'], 0])
+        # print(pred.shape)
+        # print(pred[0].shape)
+        # print(pred[0, 0, output['slice_index'], 0])
 
         # Calculate the prediction from the probabilities
         conf = np.sum(np.argmax(pred))
-        print(conf)
+        # print(conf)
         pred = np.argmax(pred, -1)
 
         # Calculate the Dice coefficient
@@ -95,16 +95,16 @@ def predict(args):
         results.append(res_row)
 
     df = pd.DataFrame(results, columns=["ID", "Dice", "Time", "Segmentation Path"])
-    df.to_csv(os.path.join(args.model_path, "results_exp2.csv"), index=False)
+    df.to_csv(os.path.join(args.model_path, "results_exp4.csv"), index=False)
 
 
 if __name__ == '__main__':
     # Set up argument parser
     parser = argparse.ArgumentParser(description='dhcp brain segmentation deploy')
     parser.add_argument('--verbose', default=False, action='store_true')
-    parser.add_argument('--cuda_devices', '-c', default='7')
+    parser.add_argument('--cuda_devices', '-c', default='4')
 
-    parser.add_argument('--model_path', '-p', default='/home/sb17/DLTK/contributions/applications/experiment4/experiment4_model')
+    parser.add_argument('--model_path', '-p', default='/home/sb17/DLTK/contributions/applications/experiment4/experiment4_model_cgm')
     parser.add_argument('--csv', default='/home/sb17/DLTK/contributions/applications/experiment4/experiment_3.csv')
 
     args = parser.parse_args()

@@ -111,7 +111,6 @@ def model_fn(features, labels, mode, params):
 
 
 def train(args):
-    print("training")
     np.random.seed(42)
     tf.set_random_seed(42)
 
@@ -203,7 +202,7 @@ if __name__ == '__main__':
     parser.add_argument('--verbose', default=False, action='store_true')
     parser.add_argument('--cuda_devices', '-c', default='0')
 
-    parser.add_argument('--model_path', '-p', default='/home/sb17/DLTK/contributions/applications/baseline/baseline_model/')
+    parser.add_argument('--model_path', '-p', default='/home/sb17/DLTK/contributions/applications/baseline/baseline_model_cgm/')
     parser.add_argument('--train_csv', default='/home/sb17/DLTK/contributions/applications/baseline/experiment_baseline.csv')
 
     args = parser.parse_args()

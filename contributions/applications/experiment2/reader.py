@@ -75,7 +75,7 @@ def read_fn(file_references, mode, params=None):
         lbl = sitk.GetArrayFromImage(sitk.ReadImage(str(img_path + img_prefix + label_postfix))).astype(
             np.int32)
 
-        lbl[lbl != 1.] = 0.
+        lbl[lbl != 2.] = 0.
         #lbl = np.stack([lbl, lbl], axis=1).astype(np.float32)
 
         # Augment if in training
@@ -88,28 +88,18 @@ def read_fn(file_references, mode, params=None):
             n_examples = params['n_examples']
             example_size = params['example_size']
 
-            #images = images.reshape([lbl.shape[0], lbl.shape[1], lbl.shape[2], NUM_CHANNELS])
-            #print(lbl.shape)
-            #print(images.shape)
             images, lbl = extract_class_balanced_example_array(
                 image=images,
                 label=lbl,
                 example_size=example_size,
                 n_examples=n_examples,
                 classes=2)
-            # examples = extract_random_example_array([images, lbl],
-            #                                         example_size=example_size,
-            #                                         n_examples=n_examples)
-            # images = examples[0]
-            # lbl = examples[1]
 
             for e in range(n_examples):
                 yield {'features': {'x': images[e].astype(np.float32)},
                        'labels': {'y': lbl[e].astype(np.int32)},
                        'subject_id': subject_id}
         else:
-            #images = images.reshape([lbl.shape[0],lbl.shape[1],lbl.shape[2], NUM_CHANNELS])
-            print("extracting full images (not training examples)")
             yield {'features': {'x': images},
                    'labels': {'y': lbl},
                    'sitk': t2_sitk,
