@@ -199,7 +199,7 @@ if __name__ == '__main__':
     # Set up argument parser
     parser = argparse.ArgumentParser(description="Contribution: dHCP GM segmentation training script")
     parser.add_argument('--run_validation', default=True)
-    parser.add_argument('--restart', default=True, action='store_true')
+    parser.add_argument('--restart', default=False, action='store_true')
     parser.add_argument('--verbose', default=False, action='store_true')
     parser.add_argument('--cuda_devices', '-c', default='2')
 
