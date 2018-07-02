@@ -87,8 +87,8 @@ def read_fn(file_references, mode, params=None):
             # print("extracting training examples (not full images)")
             n_examples = params['n_examples']
             example_size = params['example_size']
-            # lbl = lbl.reshape([1, lbl.shape[0], lbl.shape[1]])
-            # images = images.reshape([lbl.shape[0], lbl.shape[1], lbl.shape[2], NUM_CHANNELS])
+            lbl = lbl.reshape([1, lbl.shape[0], lbl.shape[1]])
+            images = images.reshape([lbl.shape[0], lbl.shape[1], lbl.shape[2], NUM_CHANNELS])
 
             images, lbl = extract_class_balanced_example_array(
                 image=images,
@@ -102,8 +102,8 @@ def read_fn(file_references, mode, params=None):
                        'labels': {'y': lbl[e].astype(np.int32)},
                        'subject_id': subject_id}
         else:
-            # lbl = lbl.reshape([1, lbl.shape[0], lbl.shape[1]])
-            # images = images.reshape([lbl.shape[0], lbl.shape[1], lbl.shape[2], NUM_CHANNELS])
+            lbl = lbl.reshape([1, lbl.shape[0], lbl.shape[1]])
+            images = images.reshape([lbl.shape[0], lbl.shape[1], lbl.shape[2], NUM_CHANNELS])
             yield {'features': {'x': images},
                    'labels': {'y': lbl},
                    'sitk': t2_sitk,
