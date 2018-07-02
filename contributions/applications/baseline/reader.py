@@ -16,6 +16,7 @@ from dltk.io.preprocessing import whitening
 t2_postfix = "T2w_restore_brain.nii.gz"
 label_postfix = "drawem_tissue_labels.nii.gz"
 NUM_CLASSES = 2
+NUM_CHANNELS = 1
 
 def read_fn(file_references, mode, params=None):
     """A custom python read function for interfacing with nii image files.
@@ -68,7 +69,7 @@ def read_fn(file_references, mode, params=None):
 
         # Remove other class labels to leave just the grey matter
         lbl[lbl != 2.] = 0.
-
+        lbl[lbl == 2.] = 1.
         # Augment if in training
         if mode == tf.estimator.ModeKeys.TRAIN:
             images, lbl = _augment(images, lbl)
@@ -78,27 +79,21 @@ def read_fn(file_references, mode, params=None):
             # print("extracting training examples (not full images)")
             n_examples = params['n_examples']
             example_size = params['example_size']
-
-            # images = images.reshape([lbl.shape[0], lbl.shape[1], lbl.shape[2], 1])
-
+            #images = images.reshape([lbl.shape[0], lbl.shape[1], lbl.shape[2], NUM_CHANNELS])
             images, lbl = extract_class_balanced_example_array(
                 image=images,
                 label=lbl,
                 example_size=example_size,
                 n_examples=n_examples,
                 classes=NUM_CLASSES)
-            # examples = extract_random_example_array([images, lbl],
-            #                                         example_size=example_size,
-            #                                         n_examples=n_examples)
-            # images = examples[0]
-            # lbl = examples[1]
-
+            
+            assert not np.any(np.isnan(images))
             for e in range(n_examples):
                 yield {'features': {'x': images[e].astype(np.float32)},
                        'labels': {'y': lbl[e].astype(np.int32)},
                        'subject_id': subject_id}
         else:
-            # images = images.reshape([lbl.shape[0],lbl.shape[1], lbl.shape[2], 1])
+            #images = images.reshape([lbl.shape[0],lbl.shape[1], lbl.shape[2], 1])
             yield {'features': {'x': images},
                    'labels': {'y': lbl},
                    'sitk': t2_sitk,

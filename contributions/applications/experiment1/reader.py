@@ -69,6 +69,7 @@ def read_fn(file_references, mode, params=None):
         # Remove other class labels to leave just the grey matter
 
         lbl[lbl != 2.] = 0.
+        lbl[lbl == 2.] = 1.
 
         # Augment if in training
         if mode == tf.estimator.ModeKeys.TRAIN:

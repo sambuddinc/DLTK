@@ -200,7 +200,7 @@ if __name__ == '__main__':
     parser.add_argument('--run_validation', default=True)
     parser.add_argument('--restart', default=False, action='store_true')
     parser.add_argument('--verbose', default=False, action='store_true')
-    parser.add_argument('--cuda_devices', '-c', default='0')
+    parser.add_argument('--cuda_devices', '-c', default='6')
 
     parser.add_argument('--model_path', '-p', default='/home/sb17/DLTK/contributions/applications/baseline/baseline_model_cgm/')
     parser.add_argument('--train_csv', default='/home/sb17/DLTK/contributions/applications/baseline/experiment_baseline.csv')
@@ -229,3 +229,4 @@ if __name__ == '__main__':
 
     # Call training
     train(args)
+# -*- coding: utf-8 -*-
