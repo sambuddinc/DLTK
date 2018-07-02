@@ -76,6 +76,7 @@ def read_fn(file_references, mode, params=None):
             np.int32)
 
         lbl[lbl != 2.] = 0.
+        lbl[lbl == 2.] = 1.
         #lbl = np.stack([lbl, lbl], axis=1).astype(np.float32)
 
         # Augment if in training
