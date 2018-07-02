@@ -1,15 +1,20 @@
-import matplotlib.pyplot as plt
-import numpy as np
 from __future__ import division
+import numpy as np
 import random
-
+import pandas as pd
+import SimpleITK as sitk
+import matplotlib.pyplot as plt
 
 def small_f(S_a, I_x):
+
     # return the sim of the image in S_a with highest sim with I_x
     max_sim = 0
     max_sim_idx = 0
+#     print(I_sa.shape)
+#     print(I_x.shape)
     for I_sa in S_a:
         sim = cos_sim(I_sa, I_x)
+#         print(sim.shape)
         if sim > max_sim:
             max_sim = sim
 
@@ -52,36 +57,122 @@ def max_rep(S_u, S_c, Sc_idx):
 
     return S_a_idx
 
+# With our data ready, we will extract random patches (in the same place for each of the three data points per subject)
 
-num_images = 10
+def extract_random_patches(image_list, conf_list, feat_list,
+                                 example_size=[1, 64, 64],
+                                 n_examples=16):
+    """Randomly extract training examples from image (and a corresponding label).
+        Returns an image example array and the corresponding label array.
 
-images_cluster1 = np.random.normal(loc=2.0, scale=1.0, size=(400, 1024))
-images_cluster2 = np.random.normal(loc=4.0, scale=1.0, size=(400, 1024))
-images_cluster3 = np.random.normal(loc=6.0, scale=1.0, size=(150, 1024))
-images_outliers = np.random.normal(loc=4.0, scale=3.0, size=(50, 1024))
+    Args:
+        image_list (np.ndarray or list or tuple): image(s) to extract random
+            patches from
+        example_size (list or tuple): shape of the patches to extract
+        n_examples (int): number of patches to extract in total
 
-images = np.concatenate((images_cluster1, images_cluster2, images_cluster3, images_outliers), axis=0)
+    Returns:
+        np.ndarray, np.ndarray: class-balanced patches extracted from full
+        images with the shape [batch, example_size..., image_channels]
+    """
 
-# img_cluster1 = np.random.norma(loc=)
-pca = PCA(n_components=2)
+    assert n_examples > 0
 
-pca_img = pca.fit_transform(images)
+    was_singular = False
+    if isinstance(image_list, np.ndarray):
+        print("was singular")
+        image_list = [image_list]
+        conf_list = [conf_list]
+        feat_list = [feat_list]
+        was_singular = True
 
-big_k = 8
-small_k = 4
-num_iterations = 3
-S_u = list(images)
-S_u_idx = range(len(S_u))
-S_a = []  # These are actual annotated
+    assert all([i_s >= e_s for i_s, e_s in zip(image_list[0].shape, example_size)]), \
+        'Image must be bigger than example shape'
+    assert (image_list[0].ndim - 1 == len(example_size)
+            or image_list[0].ndim == len(example_size)), \
+        'Example size doesnt fit image size'
 
-for i in range(num_iterations):
-    random_Sc_idx = random.sample(range(len(S_u_idx)), big_k)
-    S_c = list(images[random_Sc_idx, :])
+    for i in image_list:
+        if len(image_list) > 1:
+            assert (i.ndim - 1 == image_list[0].ndim
+                    or i.ndim == image_list[0].ndim
+                    or i.ndim + 1 == image_list[0].ndim), \
+                'Example size doesnt fit image size'
 
-    S_a_indices = max_rep(S_u, S_c, random_Sc_idx)
-    S_a.extend(S_a_indices)
+            assert all([i0_s == i_s for i0_s, i_s in zip(image_list[0].shape, i.shape)]), \
+                'Image shapes must match'
 
-    S_u_idx = [x for x in range(len(S_u)) if x not in S_a]
-    plt.figure(i)
-    plt.scatter(pca_img[S_u_idx, 0], pca_img[S_u_idx, 1], c='b')
-    plt.scatter(pca_img[S_a, 0], pca_img[S_a, 1], c='r')
+    rank = len(example_size)
+
+    # Extract random examples from image and label
+    valid_loc_range = [image_list[0].shape[i] - example_size[i] for i in range(rank)]
+
+    rnd_loc = [np.random.randint(valid_loc_range[dim], size=n_examples)
+               if valid_loc_range[dim] > 0
+               else np.zeros(n_examples, dtype=int) for dim in range(rank)]
+
+    examples = [[]] * len(image_list)
+    examples_f = [[]] * len(feat_list)
+    examples_c = [[]] * len(conf_list)
+    for i in range(n_examples):
+        slicer = [slice(rnd_loc[dim][i], rnd_loc[dim][i] + example_size[dim])
+                  for dim in range(rank)]
+
+        for j in range(len(image_list)):
+            ex_image = image_list[j][slicer][np.newaxis]
+            ex_conf = conf_list[j][slicer][np.newaxis]
+            ex_feat = feat_list[j][slicer][np.newaxis]
+            # Concatenate and return the examples
+            examples[j] = np.concatenate((examples[j], ex_image), axis=0) \
+                if (len(examples[j]) != 0) else ex_image
+            examples_f[j] = np.concatenate((examples_f[j], ex_feat), axis=0) \
+                if (len(examples_f[j]) != 0) else ex_feat
+            examples_c[j] = np.concatenate((examples_c[j], ex_conf), axis=0) \
+                if (len(examples_c[j]) != 0) else ex_conf
+
+    if was_singular:
+        return examples[0]
+    return [examples, examples_c, examples_f]
+
+
+# Load our example data into memory
+num_images = 5
+
+data_dir = "/Users/sambudd2/PycharmProjects/DLTK/contributions/applications/AL_framework/datasets/ALout/"
+
+file_names = pd.read_csv(
+                data_dir + "im_refs.csv",
+                dtype=object,
+                keep_default_na=False,
+                na_values=[]).as_matrix()
+
+
+
+images = []
+confidences = []
+features = []
+
+for im in file_names:
+    im_id = im[0]
+#     print(im_id)
+    im_name = im[2] + "T2w_restore_brain.nii.gz"
+    image = sitk.GetArrayFromImage(sitk.ReadImage(data_dir+im_name))
+    conf = sitk.GetArrayFromImage(sitk.ReadImage(data_dir+str(im_id)+"_conf.nii.gz"))
+    feat = sitk.GetArrayFromImage(sitk.ReadImage(data_dir+str(im_id)+"_feat.nii.gz"))
+    patches = extract_random_patches(image, conf, feat, n_examples=100)
+    images.append(patches[0])
+    features.append(patches[1])
+    confidences.append(patches[2])
+
+# We now have a list of patches: lets vis some!
+# ex_i = np.array(ex_i)
+# ex_c = np.array(ex_c)
+# ex_f = np.array(ex_f)
+print(ex_i.shape)
+print(ex_c.shape)
+print(ex_f.shape)
+fig, axes = plt.subplots(10, 3, figsize=(30,30))
+for i in range(0, len(axes)):
+    axes[i, 0].imshow(ex_i[i, 0])
+    axes[i, 1].imshow(ex_c[i, 0])
+    axes[i, 2].imshow(ex_f[i, 0])
