@@ -1,0 +1,2 @@
+application_name, data_directory, input_data_type_desc, output_data_type_desc
+dHCP CGM Segmentation Baseline, /data/, T2 MRI Stack, Cortical Grey Matter segmentations
