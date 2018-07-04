@@ -12,7 +12,7 @@ al_fw_path = 'C:\\Users\\sb17\\MResProject\\DLTK\\contributions\\applications\\A
 
 @app.route("/list_applications", methods=['GET'])
 def list_applications():
-    apps = os.listdir(al_fw_path)
+    apps = sorted(os.listdir(al_fw_path))
     cur_apps = []
     for i, ap in enumerate(apps):
         app_df = pd.read_csv(al_fw_path + ap + '\\app_data',
@@ -29,6 +29,45 @@ def list_applications():
 
     return jsonify(cur_apps)
 
+
+@app.route("/list_patches/<app_id>", methods=['GET'])
+def list_patches_for(app_id):
+    patch_list = pd.read_csv(al_fw_path + 'app'+str(app_id)+'\\data\\subject_data',
+                               dtype=object,
+                               keep_default_na=False,
+                               na_values=[]).as_matrix()
+    patches = []
+    for patch in patch_list:
+        if patch[2]:
+            patches.append(patch[0])
+
+    return jsonify(patches)
+
+
+@app.route("/patch/<app_id>/<patch_id>", methods=['GET'])
+def get_patch_from(app_id, patch_id):
+    raw_path = al_fw_path + 'app' + str(app_id) + '\\data\\raw\\' + str(patch_id) + '_patch.nii.gz'
+    seg_path = al_fw_path + 'app' + str(app_id) + '\\data\\seg\\' + str(patch_id) + '_seg.nii.gz'
+    raw_sitk = sitk.ReadImage(raw_path)
+    seg_sitk = sitk.ReadImage(seg_path)
+    return jsonify({
+                'patch': sitk.GetArrayFromImage(raw_sitk).tolist(),
+                'seg': sitk.GetArrayFromImage(seg_sitk).tolist()
+            })
+
+
+@app.route("/annotate_patch/<app_id>/<patch_id>", methods=['POST'])
+def annontate_patch(app_id, patch_id):
+    content = request.get_json()
+    print(content['one'])
+    sitk_img = sitk.GetImageFromArray(content['anot'])
+    sitk_info = sitk.ReadImage(al_fw_path + 'app' + str(app_id) + '\\data\\seg\\' + str(patch_id) + '_seg.nii.gz')
+    sitk_img.CopyInformation(sitk_info)
+    sitk.WriteImage(sitk_img, al_fw_path + 'app' + str(app_id) + '\\data\\anot\\' + str(patch_id) + '_anot.nii.gz')
+    return jsonify({
+        'results': "wahheeyyy",
+        'wesent': content
+    })
 
 # @app.route("/patch", methods=['GET'])
 # def get_patch():
@@ -48,12 +87,12 @@ def list_applications():
 #     return rv
 #
 #
-# @app.route("/raw", methods=['GET'])
-# def get_raw():
-#     filename = "C:\\Users\\sb17\\MResProject\\DLTK\\contributions\\applications\\AL_framework\\datasets\\ALout\\patch_example.nii.gz"
-#     im = sitk.GetArrayFromImage(sitk.ReadImage(filename))
-#     response = jsonify({'data': im.tolist()})
-#     return response
+@app.route("/raw", methods=['GET'])
+def get_raw():
+    filename = "C:\\Users\\sb17\\MResProject\\DLTK\\contributions\\applications\\AL_framework\\datasets\\ALout\\patch_example.nii.gz"
+    im = sitk.GetArrayFromImage(sitk.ReadImage(filename))
+    response = jsonify({'data': im.tolist()})
+    return response
 #
 #
 # @app.route("/seg", methods=['GET', 'POST', 'OPTIONS'])

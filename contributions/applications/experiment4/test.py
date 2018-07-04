@@ -95,7 +95,7 @@ def predict(args):
         results.append(res_row)
 
     df = pd.DataFrame(results, columns=["ID", "Dice", "Time", "Segmentation Path"])
-    df.to_csv(os.path.join(args.model_path, "results_exp4.csv"), index=False)
+    df.to_csv(os.path.join(args.model_path, "results_exp4_cgm.csv"), index=False)
 
 
 if __name__ == '__main__':
