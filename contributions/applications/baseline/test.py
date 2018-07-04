@@ -68,11 +68,11 @@ def predict(args):
 
         print("Prediction: " + str(pred.shape))
 
-        features = sliding_window_segmentation_inference(
-            session=my_predictor.session,
-            ops_list=[logits],
-            sample_dict={my_predictor._feed_tensors['x']: img},
-            batch_size=16)[0]
+        #features = sliding_window_segmentation_inference(
+         #   session=my_predictor.session,
+          #  ops_list=[logits],
+           # sample_dict={my_predictor._feed_tensors['x']: img},
+            #batch_size=16)[0]
 
         class_confidences = pred
 
@@ -96,16 +96,16 @@ def predict(args):
         sitk.WriteImage(new_sitk, output_fn)
         
         # Save the feature vector file as a .nii.gz using header info from origincal sitk
-        print("Features: " + str(features.shape))
-        feature_sitk = sitk.GetImageFromArray(features[0])
-        feature_sitk.CopyInformation(output['sitk'])
-        sitk.WriteImage(feature_sitk, os.path.join(args.model_path, 'ALout', '{}_feat.nii.gz'.format(output['subject_id'])))
+        #print("Features: " + str(features.shape))
+        #feature_sitk = sitk.GetImageFromArray(features[0])
+        #feature_sitk.CopyInformation(output['sitk'])
+        #sitk.WriteImage(feature_sitk, os.path.join(args.model_path, 'ALout', '{}_feat.nii.gz'.format(output['subject_id'])))
 
-        # Save the confidence vector file as a .nii.gz using header info from original stack
-        print("Confidences: " + str(class_confidences.shape))
-        conf_sitk = sitk.GetImageFromArray(class_confidences[0])
-        conf_sitk.CopyInformation(output['sitk'])
-        sitk.WriteImage(conf_sitk, os.path.join(args.model_path, 'ALout', '{}_conf.nii.gz'.format(output['subject_id'])))
+        ## Save the confidence vector file as a .nii.gz using header info from original stack
+        #print("Confidences: " + str(class_confidences.shape))
+        #conf_sitk = sitk.GetImageFromArray(class_confidences[0])
+        #conf_sitk.CopyInformation(output['sitk'])
+        #sitk.WriteImage(conf_sitk, os.path.join(args.model_path, 'ALout', '{}_conf.nii.gz'.format(output['subject_id'])))
 
         # Print outputs
         print('Id={}; Dice={:0.4f}; time={:0.2} secs; output_path={};'.format(
@@ -114,7 +114,7 @@ def predict(args):
         results.append(res_row)
 
     df = pd.DataFrame(results, columns=["ID", "Dice", "Cross Entropy", "Time", "Segmentation Path"])
-    df.to_csv(os.path.join(args.model_path, 'ALout', 'results_baseline_alfetest.csv'), index=False)
+    df.to_csv(os.path.join(args.model_path, 'results_baseline_cgm.csv'), index=False)
 
 
 if __name__ == '__main__':
