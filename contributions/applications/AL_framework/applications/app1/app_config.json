@@ -1,0 +1,28 @@
+{
+    "id": 1,
+    "name": "App 1",
+    "input_desc": [
+        "t2w MRI",
+        "t1w MRI"
+    ],
+    "output desc": "GM tissue segmentation",
+    "num_channels": 2,
+    "data_dir": "/data",
+    "input_postfix": [
+        "T2w_restore_brain.nii.gz",
+        "T1w_restore_brain.nii.gz"
+    ],
+    "output_postfix": "drawem_tissue_labels.nii.gz",
+    "model_status": 2,
+    "retrain_flag": true,
+    "new_examples_for_update": 10,
+    "num_classes": 2,
+    "train_val_test_split": [
+        3,
+        4,
+        5
+    ],
+    "batch_size": 16,
+    "max_steps": 5000,
+    "reader_type": "Stack"
+}

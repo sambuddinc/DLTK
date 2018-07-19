@@ -1,2 +1,2 @@
-application_name, data_directory, input_data_type_desc, output_data_type_desc
-dHCP CGM Segmentation Experiment 1, /data/, T2 MRI Stack, Cortical Grey Matter segmentations
+application_name,data_directory,input_data_type_desc,output_data_type_desc,model_exists,model_iteration,retrain_flag,num_dp_for_update
+dHCP CGM Segmentation Experiment 1,/data/,T2 MRI Stack,Cortical Grey Matter segmentations,1,0,True,5

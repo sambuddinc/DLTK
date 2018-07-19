@@ -1,12 +1,10 @@
-patch_id, true_label, seg_suggestion, annotated
-0, false, true, false
-1, false, true, false
-2, false, true, false
-3, false, true, false
-4, false, true, false
-5, false, true, false
-6, false, true, false
-7, false, true, false
-8, false, true, false
-9, false, true, false
-10, false, true, false
+subject_id, path, prefix, bs_exists, gs_exists
+0,C:\Users\sb17\MResProject\DLTK\contributions\applications\AL_framework\applications\app1\data\subjects\subject51,sub-CC00051XX02_ses-7702_,1,0
+1,C:\Users\sb17\MResProject\DLTK\contributions\applications\AL_framework\applications\app1\data\subjects\subject52,sub-CC00052XX03_ses-8300_,1,0
+2,C:\Users\sb17\MResProject\DLTK\contributions\applications\AL_framework\applications\app1\data\subjects\subject53,sub-CC00053XX04_ses-8607_,1,0
+3,C:\Users\sb17\MResProject\DLTK\contributions\applications\AL_framework\applications\app1\data\subjects\subject54,sub-CC00054XX05_ses-8800_,1,0
+4,C:\Users\sb17\MResProject\DLTK\contributions\applications\AL_framework\applications\app1\data\subjects\subject55,sub-CC00055XX06_ses-9300_,1,0
+5,C:\Users\sb17\MResProject\DLTK\contributions\applications\AL_framework\applications\app1\data\subjects\subject56,sub-CC00056XX07_ses-10700_,1,0
+6,C:\Users\sb17\MResProject\DLTK\contributions\applications\AL_framework\applications\app1\data\subjects\subject57,sub-CC00057XX08_ses-11002_,0,0
+7,C:\Users\sb17\MResProject\DLTK\contributions\applications\AL_framework\applications\app1\data\subjects\subject60,sub-CC00060XX03_ses-12501_,0,0
+8,C:\Users\sb17\MResProject\DLTK\contributions\applications\AL_framework\applications\app1\data\subjects\subject61,sub-CC00061XX04_ses-13300_,0,0
