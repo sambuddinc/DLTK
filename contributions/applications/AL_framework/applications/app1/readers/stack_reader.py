@@ -47,7 +47,8 @@ def read_fn(file_references, mode, params=None):
         subject_id = f[0]
         subj_path = f[1]
         subj_prefix = f[2]
-        stack_folder_path = os.path.join(subj_path, 'stacks')
+        stack_folder_path = subj_path
+        #stack_folder_path = os.path.join(subj_path, 'stacks')
 
         app_json = get_config_for_app()
         sitk_ref = None

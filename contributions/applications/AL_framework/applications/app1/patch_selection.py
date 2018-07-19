@@ -52,10 +52,10 @@ def select_patches():
     parser.add_argument('--cuda_devices', '-c', default='0')
 
     parser.add_argument('--model_path', '-p',
-                        default=os.path.join(os.path.dirname(__file__), 'model_gpu'))
+                        default=os.path.join(os.path.dirname(__file__), 'model'))
 
     parser.add_argument('--csv',
-                        default=os.path.join(os.path.dirname(__file__), 'data', 'subject_data'))
+                        default=os.path.join(os.path.dirname(__file__), 'data', 'subject_data.csv'))
 
     args = parser.parse_args()
 
@@ -91,8 +91,8 @@ def predict(args):
 
     # We want to predict only on unannotated subjects
     ua_fn = []
-    for row in file_names:
-        # if row[3] == '0':
+    for i, row in enumerate(file_names):
+        if row[3] == '0' and i < 10:
             ua_fn.append(row)
 
     # From the model_path, parse the latest saved model and restore a
@@ -126,7 +126,8 @@ def predict(args):
         print("Unsupported reader type: please specify a new one")
         return
 
-    mod = import_module(module_name)
+    #mod = import_module(module_name)
+    mod = import_module('readers.stack_reader')
     read_fn = vars(mod)['read_fn']
     reader_params = {'extract_examples': False}
     for output in read_fn(file_references=ua_fn,
@@ -161,7 +162,7 @@ def predict(args):
         # original sitk
         # print(output)
         subj_path = output['path']
-        output_fn = os.path.join(subj_path, 'stacks', '{}bronze_seg.nii.gz'.format(output['prefix']))
+        output_fn = os.path.join(subj_path, '{}bronze_seg.nii.gz'.format(output['prefix']))
         new_sitk = sitk.GetImageFromArray(pred[0].astype(np.int32))
         print('pred unique:', np.unique(np.array(pred[0]).flatten()))
         new_sitk.CopyInformation(output['sitk'])
@@ -171,14 +172,14 @@ def predict(args):
         print("Features: " + str(features.shape))
         feature_sitk = sitk.GetImageFromArray(features[0])
         feature_sitk.CopyInformation(output['sitk'])
-        sitk.WriteImage(feature_sitk, os.path.join(subj_path, 'stacks', '{}feat.nii.gz'.format(output['prefix'])))
+        sitk.WriteImage(feature_sitk, os.path.join(subj_path, '{}feat.nii.gz'.format(output['prefix'])))
 
         # Save the confidence vector file as a .nii.gz using header info from original stack
         print("Confidences: " + str(class_confidences.shape))
         print(np.unique(np.array(class_confidences).flatten()))
         conf_sitk = sitk.GetImageFromArray(class_confidences[0])
         conf_sitk.CopyInformation(output['sitk'])
-        sitk.WriteImage(conf_sitk, os.path.join(subj_path, 'stacks', '{}conf.nii.gz'.format(output['prefix'])))
+        sitk.WriteImage(conf_sitk, os.path.join(subj_path, '{}conf.nii.gz'.format(output['prefix'])))
 
     # Now perform patch selection with the saved outputs
     select_patch_batch(args, app_json)
@@ -189,6 +190,7 @@ def select_patch_batch(args, app_json):
     confidences = []
     features = []
     segs = []
+    em_segs = []
     file_names = pd.read_csv(
         args.csv,
         dtype=object,
@@ -197,8 +199,8 @@ def select_patch_batch(args, app_json):
 
     # We want to predict only on unannotated subjects
     ua_fn = []
-    for row in file_names:
-        if row[3] == '0':
+    for i, row in enumerate(file_names):
+        if row[3] == '0' and i < 10:
             ua_fn.append(row)
 
 
@@ -206,14 +208,15 @@ def select_patch_batch(args, app_json):
     for im in ua_fn:
         im_id = im[0]
         im_name = im[2] + app_json['input_postfix'][0]
-        im_fn = os.path.join(im[1], 'stacks')
+        im_fn = os.path.join(im[1])
         im_pref = im[2]
         image = sitk.GetArrayFromImage(sitk.ReadImage(os.path.join(im_fn, im_name)))
         conf = sitk.GetArrayFromImage(sitk.ReadImage(os.path.join(im_fn, str(im_pref) +"conf.nii.gz")))
         feat = sitk.GetArrayFromImage(sitk.ReadImage(os.path.join(im_fn, str(im_pref) +"feat.nii.gz")))
         seg = sitk.GetArrayFromImage(sitk.ReadImage(os.path.join(im_fn, str(im_pref) +"bronze_seg.nii.gz")))
+        em_seg = sitk.GetArrayFromImage(sitk.ReadImage(os.path.join(im_fn, str(im_pref) + str(app_json['output_postfix']))))
 
-        patches = extract_random_patches(image, conf, feat, seg, n_examples=100)
+        patches = extract_random_patches(image, conf, feat, seg, em_seg, n_examples=100)
         patch_count = patch_count + 100
         images = np.concatenate((images, patches[0]), axis=0) \
             if (len(images) != 0) else patches[0]
@@ -223,6 +226,8 @@ def select_patch_batch(args, app_json):
             if (len(features) != 0) else patches[2]
         segs = np.concatenate((segs, patches[3]), axis=0) \
             if (len(segs) != 0) else patches[3]
+        em_segs = np.concatenate((em_segs, patches[4]), axis=0) \
+            if (len(em_segs) != 0) else patches[4]
 
     # We now have our matching patches (raw image, class confidences, feature maps)
     # For each patch we flatten the confidence scores into a single value for that patch (higher = more confident)
@@ -240,7 +245,7 @@ def select_patch_batch(args, app_json):
     top_conf_feat = [features[i] for i in top_conf_indices]
     # print(top_conf_feat.shape)
     top_conf_segs = [segs[i] for i in top_conf_indices]
-
+    top_conf_em_segs = [em_segs[i] for i in top_conf_indices]
     # We have our most uncertain images, now use the features to select the most representative
     # Using Suggestive Annotation algorithm
 
@@ -270,9 +275,10 @@ def select_patch_batch(args, app_json):
     for i, index in enumerate(S_a):
         patch = top_conf_images[index]
         seg = top_conf_segs[index]
+        em_seg = top_conf_em_segs[index]
         sitk.WriteImage(sitk.GetImageFromArray(patch), os.path.join(save_dir, str(i) + '_patch.nii.gz'))
         sitk.WriteImage(sitk.GetImageFromArray(seg), os.path.join(save_dir, str(i) + '_seg.nii.gz'))
-
+        sitk.WriteImage(sitk.GetImageFromArray(em_seg), os.path.join(save_dir, str(i) + '_emseg.nii.gz'))
     return
 
 
@@ -307,16 +313,12 @@ def max_rep(S_u, S_c, Sc_idx, small_k):
     S_a = []
 
     while len(S_a) < small_k:
-        print('finding something')
         current_best = 0
         current_best_idx = None
         for i, img_and_idx in enumerate(zip(S_c, Sc_idx)):
-            print('in enum')
             S_a.append(img_and_idx[0])
             tmp_score = big_f(S_a, S_u)
-            print('temp score', tmp_score)
             if tmp_score > current_best:
-                print('updating index')
                 current_best = tmp_score
                 current_best_idx = i
 
@@ -330,7 +332,7 @@ def max_rep(S_u, S_c, Sc_idx, small_k):
     return S_a_idx
 
 
-def extract_random_patches(image_list, conf_list, feat_list, seg_list,
+def extract_random_patches(image_list, conf_list, feat_list, seg_list, em_seg_list,
                            example_size=[1, 64, 64],
                            n_examples=16):
     """Randomly extract training examples from image (and a corresponding label).
@@ -355,6 +357,7 @@ def extract_random_patches(image_list, conf_list, feat_list, seg_list,
         conf_list = [conf_list]
         feat_list = [feat_list]
         seg_list = [seg_list]
+        em_seg_list = [em_seg_list]
         was_singular = True
 
     assert all([i_s >= e_s for i_s, e_s in zip(image_list[0].shape, example_size)]), \
@@ -386,6 +389,7 @@ def extract_random_patches(image_list, conf_list, feat_list, seg_list,
     examples_f = [[]] * len(feat_list)
     examples_c = [[]] * len(conf_list)
     examples_s = [[]] * len(seg_list)
+    examples_e = [[]] * len(em_seg_list)
     for i in range(n_examples):
         slicer = [slice(rnd_loc[dim][i], rnd_loc[dim][i] + example_size[dim])
                   for dim in range(rank)]
@@ -395,6 +399,7 @@ def extract_random_patches(image_list, conf_list, feat_list, seg_list,
             ex_conf = conf_list[j][slicer][np.newaxis]
             ex_feat = feat_list[j][slicer][np.newaxis]
             ex_seg = seg_list[j][slicer][np.newaxis]
+            ex_emseg = em_seg_list[j][slicer][np.newaxis]
             # Concatenate and return the examples
             examples[j] = np.concatenate((examples[j], ex_image), axis=0) \
                 if (len(examples[j]) != 0) else ex_image
@@ -404,7 +409,37 @@ def extract_random_patches(image_list, conf_list, feat_list, seg_list,
                 if (len(examples_c[j]) != 0) else ex_conf
             examples_s[j] = np.concatenate((examples_s[j], ex_seg), axis=0) \
                 if (len(examples_s[j]) != 0) else ex_seg
+            examples_e[j] = np.concatenate((examples_e[j], ex_emseg), axis=0) \
+                if (len(examples_e[j]) != 0) else ex_emseg
 
     if was_singular:
-        return [examples[0], examples_c[0], examples_f[0], examples_s[0]]
-    return [examples, examples_c, examples_f, examples_s]
+        return [examples[0], examples_c[0], examples_f[0], examples_s[0], examples_e[0]]
+    return [examples, examples_c, examples_f, examples_s, examples_e]
+
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='dhcp brain segmentation deploy')
+    parser.add_argument('--verbose', default=False, action='store_true')
+    parser.add_argument('--cuda_devices', '-c', default='0')
+
+    parser.add_argument('--model_path', '-p',
+                        default=os.path.join(os.path.dirname(__file__), 'model'))
+
+    parser.add_argument('--csv',
+                        default=os.path.join(os.path.dirname(__file__), 'data', 'subject_data.csv'))
+
+    args = parser.parse_args()
+
+    # Set verbosity
+    if args.verbose:
+        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
+        tf.logging.set_verbosity(tf.logging.INFO)
+    else:
+        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+        tf.logging.set_verbosity(tf.logging.ERROR)
+
+    # GPU allocation options
+    os.environ["CUDA_VISIBLE_DEVICES"] = args.cuda_devices
+
+    select_patch_batch(args, get_config_for_app())
