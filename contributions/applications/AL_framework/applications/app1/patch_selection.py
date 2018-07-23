@@ -215,7 +215,8 @@ def select_patch_batch(args, app_json):
         feat = sitk.GetArrayFromImage(sitk.ReadImage(os.path.join(im_fn, str(im_pref) +"feat.nii.gz")))
         seg = sitk.GetArrayFromImage(sitk.ReadImage(os.path.join(im_fn, str(im_pref) +"bronze_seg.nii.gz")))
         em_seg = sitk.GetArrayFromImage(sitk.ReadImage(os.path.join(im_fn, str(im_pref) + str(app_json['output_postfix']))))
-
+        em_seg[em_seg != 2.] = 0.
+        em_seg[em_seg == 2.] = 1.
         patches = extract_random_patches(image, conf, feat, seg, em_seg, n_examples=100)
         patch_count = patch_count + 100
         images = np.concatenate((images, patches[0]), axis=0) \
@@ -251,7 +252,7 @@ def select_patch_batch(args, app_json):
 
     big_k = 8  # 8
     small_k = 4  # 4
-    num_iterations = 3
+    num_iterations = 4
     S_u = list(top_conf_feat)
     S_u = [np.array(x).flatten() for x in S_u]
     S_u_idx = range(len(S_u))
