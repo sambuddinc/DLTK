@@ -38,11 +38,17 @@ for i, row in enumerate(all_data):
                 subj_row.append(0)
                 subj_row.append(1)
                 subj_row.append(0)
-            else:                  # Unannotated rest of data to be queried for new annotations
+            elif 15 <= i < 30:     # Unannotated rest of data to be queried for new annotations
                 subj_row.append(0)
                 subj_row.append(0)
                 subj_row.append(0)
                 subj_row.append(1)
+            else:                  # Unused data for now
+                subj_row.append(0)
+                subj_row.append(0)
+                subj_row.append(0)
+                subj_row.append(0)
+
             output_data.append(subj_row)
 
 
