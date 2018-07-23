@@ -82,6 +82,12 @@ def get_config_for_app():
     return app_json
 
 
+def write_app_config(app_json):
+    app_fn = os.path.join(os.path.dirname(__file__), 'app_config.json')
+    with open(app_fn, 'w') as outfile:
+        json.dump(app_json, outfile, indent=4)
+
+
 def predict(args):
     file_names = pd.read_csv(
         args.csv,
@@ -92,7 +98,7 @@ def predict(args):
     # We want to predict only on unannotated subjects
     ua_fn = []
     for i, row in enumerate(file_names):
-        if row[3] == '0' and i < 10:
+        if row[6] == '1':
             ua_fn.append(row)
 
     # From the model_path, parse the latest saved model and restore a
@@ -114,8 +120,8 @@ def predict(args):
     # Iterate through the files, predict on the full volumes and compute a Dice
     # coefficient
     app_json = get_config_for_app()
-    module_name = 'contributions.applications.AL_framework.applications.app' + str(app_json['id']) + '.readers.'
-
+    # module_name = 'contributions.applications.AL_framework.applications.app' + str(app_json['id']) + '.readers.'
+    module_name = 'readers.'
     if app_json['reader_type'] == "Patch":
         module_name = module_name + 'patch_reader'
     elif app_json['reader_type'] == "Slice":
@@ -126,8 +132,8 @@ def predict(args):
         print("Unsupported reader type: please specify a new one")
         return
 
-    #mod = import_module(module_name)
-    mod = import_module('readers.stack_reader')
+    # mod = import_module('readers.stack_reader')
+    mod = import_module(module_name)
     read_fn = vars(mod)['read_fn']
     reader_params = {'extract_examples': False}
     for output in read_fn(file_references=ua_fn,
@@ -200,9 +206,8 @@ def select_patch_batch(args, app_json):
     # We want to predict only on unannotated subjects
     ua_fn = []
     for i, row in enumerate(file_names):
-        if row[3] == '0' and i < 10:
+        if row[6] == '1':
             ua_fn.append(row)
-
 
     patch_count = 0
     for im in ua_fn:
@@ -280,6 +285,10 @@ def select_patch_batch(args, app_json):
         sitk.WriteImage(sitk.GetImageFromArray(patch), os.path.join(save_dir, str(i) + '_patch.nii.gz'))
         sitk.WriteImage(sitk.GetImageFromArray(seg), os.path.join(save_dir, str(i) + '_seg.nii.gz'))
         sitk.WriteImage(sitk.GetImageFromArray(em_seg), os.path.join(save_dir, str(i) + '_emseg.nii.gz'))
+
+    # Update model status now that patches are available for annotation
+    app_json['model_status'] = 3
+    write_app_config(app_json)
     return
 
 
@@ -416,7 +425,6 @@ def extract_random_patches(image_list, conf_list, feat_list, seg_list, em_seg_li
     if was_singular:
         return [examples[0], examples_c[0], examples_f[0], examples_s[0], examples_e[0]]
     return [examples, examples_c, examples_f, examples_s, examples_e]
-
 
 
 if __name__ == '__main__':

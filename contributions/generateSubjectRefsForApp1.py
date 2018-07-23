@@ -23,14 +23,28 @@ for i, row in enumerate(all_data):
             ses_num) + "_"  # Reader file looks for post-fix e.g T2w_restore_brain.nii
         if subj_data_prefix + "T1w_restore_brain.nii.gz" in os.listdir(subj_data_path):
             subj_row = [i + 1, subj_data_path, subj_data_prefix]
-            if (i < 5):
+            if i < 5:              # Initial Training Set
                 subj_row.append(1)
                 subj_row.append(0)
-            else:
                 subj_row.append(0)
                 subj_row.append(0)
+            elif 5 <= i < 10:      # Validation set
+                subj_row.append(0)
+                subj_row.append(1)
+                subj_row.append(0)
+                subj_row.append(0)
+            elif 10 <= i < 15:     # Test Set
+                subj_row.append(0)
+                subj_row.append(0)
+                subj_row.append(1)
+                subj_row.append(0)
+            else:                  # Unannotated rest of data to be queried for new annotations
+                subj_row.append(0)
+                subj_row.append(0)
+                subj_row.append(0)
+                subj_row.append(1)
             output_data.append(subj_row)
 
 
-df = pd.DataFrame(output_data, columns=["subject_id", "path", "prefix", "bs_exists", "gs_exists"])
+df = pd.DataFrame(output_data, columns=["subject_id", "path", "prefix", "train", "val", "test", "unannotated"])
 df.to_csv("/home/sb17/DLTK/contributions/applications/AL_framework/applications/app1/data/" + "subject_data.csv", index=False)

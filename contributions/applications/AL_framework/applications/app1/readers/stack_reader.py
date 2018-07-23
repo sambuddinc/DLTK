@@ -66,7 +66,7 @@ def read_fn(file_references, mode, params=None):
         # print("Correct stacking: ", len(inputs_to_stack) == len(app_json['input_postfix']))
         images = np.stack(inputs_to_stack, axis=-1).astype(np.float32)
 
-        print('mode cheack: ', mode)
+        # print('mode cheack: ', mode)
         if mode == tf.estimator.ModeKeys.PREDICT:
             # print("Predict not yet implemented, please try a different mode")
             yield {'features': {'x': images},

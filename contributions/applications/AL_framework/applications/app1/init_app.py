@@ -21,7 +21,6 @@ EVAL_EVERY_N_STEPS = 100
 EVAL_STEPS = 1
 SHUFFLE_CACHE_SIZE = 64
 
-
 def init_app_func():
     # Start app initialisation
     print('init app!')
@@ -123,13 +122,22 @@ def train(args):
 
     app_json = get_config_for_app()
 
-    train_val_test_split = app_json['train_val_test_split']
+    # train_val_test_split = app_json['train_val_test_split']
+    #
+    # num_train = train_val_test_split[0]
+    # num_val = train_val_test_split[1]
+    #
+    # train_filenames = all_filenames[0:num_train]
+    # val_filenames = all_filenames[num_train:num_val]
 
-    num_train = train_val_test_split[0]
-    num_val = train_val_test_split[1]
+    train_filenames = []
+    val_filenames = []
 
-    train_filenames = all_filenames[0:num_train]
-    val_filenames = all_filenames[num_train:num_val]
+    for row in all_filenames:
+        if row[3] == '1':
+            train_filenames.append(row)
+        if row[4] == '1':
+            val_filenames.append(row)
 
     # Set up a data reader to handle the file i/o.
     reader_params = {'n_examples': 16,
@@ -278,7 +286,6 @@ def model_fn(features, labels, mode, params):
     with tf.control_dependencies(update_ops):
         train_op = optimiser.minimize(loss, global_step=global_step)
 
-    # TODO: make configurable
     # 4.1 (optional) create custom image summaries for tensorboard
     my_image_summaries = {}
     for n, input_type in enumerate(app_json['input_desc']):
@@ -303,4 +310,9 @@ def model_fn(features, labels, mode, params):
                                       loss=loss,
                                       train_op=train_op,
                                       eval_metric_ops=None)
+
+
+if __name__ == '__main__':
+    print('init from main')
+    init_app_func()
 

@@ -14,7 +14,6 @@
     ],
     "output_postfix": "drawem_tissue_labels.nii.gz",
     "model_status": 3,
-    "model_iteration": 0,
     "retrain_flag": true,
     "new_examples_for_update": 10,
     "num_classes": 2,
