@@ -56,7 +56,7 @@ def read_fn(file_references, mode, params=None):
             inputs_to_stack = []
             for i, input_type in enumerate(app_json['input_postfix']):
                 # Read the image nii with sitk and keep the pointer to the sitk.Image of an input
-                im_sitk = sitk.ReadImage(os.path.join(patch_path, str(str(patch_id) + input_type)))
+                im_sitk = sitk.ReadImage(os.path.join(patch_path, str(str(patch_id) + '_' + input_type)))
                 im = sitk.GetArrayFromImage(im_sitk)
                 im = whitening(im)
                 inputs_to_stack.append(im)
