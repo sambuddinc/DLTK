@@ -49,14 +49,13 @@ def read_fn(file_references, mode, params=None):
             # Handle patches in here
             patch_id = f[0]
             patch_path = f[1]
-            patch_postfix = '_patch.nii.gz'
             lbl_postfix = '_emseg.nii.gz'   # TODO: change to be manual annotation patch
             app_json = get_config_for_app()
             sitk_ref = None
             inputs_to_stack = []
             for i, input_type in enumerate(app_json['input_postfix']):
                 # Read the image nii with sitk and keep the pointer to the sitk.Image of an input
-                im_sitk = sitk.ReadImage(os.path.join(patch_path, str(str(patch_id) + input_type)))
+                im_sitk = sitk.ReadImage(os.path.join(patch_path, str(str(patch_id) + '_' + input_type)))
                 im = sitk.GetArrayFromImage(im_sitk)
                 im = whitening(im)
                 inputs_to_stack.append(im)
