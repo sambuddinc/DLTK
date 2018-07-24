@@ -212,10 +212,14 @@ def select_patch_batch(args, app_json):
     patch_count = 0
     for im in ua_fn:
         im_id = im[0]
-        im_name = im[2] + app_json['input_postfix'][0]
+        im_name = im[2]
         im_fn = os.path.join(im[1])
         im_pref = im[2]
-        image = sitk.GetArrayFromImage(sitk.ReadImage(os.path.join(im_fn, im_name)))
+        ims = []
+        for i, im in enumerate(app_json['input_postfix']):
+            ima = sitk.GetArrayFromImage(sitk.ReadImage(os.path.join(im_fn, im_name + str(im))))
+            ims.append(ima)
+        image = np.stack(ims, axis=-1)
         conf = sitk.GetArrayFromImage(sitk.ReadImage(os.path.join(im_fn, str(im_pref) +"conf.nii.gz")))
         feat = sitk.GetArrayFromImage(sitk.ReadImage(os.path.join(im_fn, str(im_pref) +"feat.nii.gz")))
         seg = sitk.GetArrayFromImage(sitk.ReadImage(os.path.join(im_fn, str(im_pref) +"bronze_seg.nii.gz")))
@@ -224,8 +228,10 @@ def select_patch_batch(args, app_json):
         em_seg[em_seg == 2.] = 1.
         patches = extract_random_patches(image, conf, feat, seg, em_seg, n_examples=100)
         patch_count = patch_count + 100
-        images = np.concatenate((images, patches[0]), axis=0) \
-            if (len(images) != 0) else patches[0]
+        for i, im in enumerate(app_json['input_postfix']):
+            images[i] = np.concatenate((images[i], patches[0][:, :, :, :, i]), axis=0) \
+                if (len(images[i]) != 0) else patches[0][:, :, :, :, i]
+
         confidences = np.concatenate((confidences, patches[1]), axis=0) \
             if (len(confidences) != 0) else patches[1]
         features = np.concatenate((features, patches[2]), axis=0) \
@@ -247,7 +253,9 @@ def select_patch_batch(args, app_json):
     sorted_indices = np.argsort(confidence_vals, axis=-1)
     top_conf_indices = sorted_indices[:100]  # swap sign for alternate ends of list
 
-    top_conf_images = [images[i] for i in top_conf_indices]
+    top_conf_images = []
+    for i, im in enumerate(app_json['input_postfix']):
+        top_conf_images[i] = [images[i][j] for j in top_conf_indices]
     top_conf_feat = [features[i] for i in top_conf_indices]
     # print(top_conf_feat.shape)
     top_conf_segs = [segs[i] for i in top_conf_indices]
@@ -278,17 +286,24 @@ def select_patch_batch(args, app_json):
 
     # Save the patches, associated segs, confs and feats
     save_dir = os.path.join(os.path.dirname(__file__), 'data', 'active_patches')
+    patch_data = []
     for i, index in enumerate(S_a):
-        patch = top_conf_images[index]
         seg = top_conf_segs[index]
         em_seg = top_conf_em_segs[index]
-        sitk.WriteImage(sitk.GetImageFromArray(patch), os.path.join(save_dir, str(i) + '_patch.nii.gz'))
         sitk.WriteImage(sitk.GetImageFromArray(seg), os.path.join(save_dir, str(i) + '_seg.nii.gz'))
         sitk.WriteImage(sitk.GetImageFromArray(em_seg), os.path.join(save_dir, str(i) + '_emseg.nii.gz'))
+        for j, im in enumerate(app_json['input_postfix']):
+            patch = top_conf_images[j][index]
+            sitk.WriteImage(sitk.GetImageFromArray(patch), os.path.join(save_dir, str(i) + '_' + str(im)))
+        patch_data_row = [i, save_dir]
+        patch_data.append(patch_data_row)
 
     # Update model status now that patches are available for annotation
     app_json['model_status'] = 3
     write_app_config(app_json)
+
+    df = pd.DataFrame(patch_data, columns=["patch_id", "path"])
+    df.to_csv(os.path.join(os.path.dirname(__file__), 'data', "patch_data.csv"), index=False)
     return
 
 
