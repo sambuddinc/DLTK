@@ -46,6 +46,180 @@ def retrain_model_func():
     return new_model_status
 
 
+def retrain_model():
+    # Set up argument parser
+    parser = argparse.ArgumentParser(description="Contribution: dHCP GM AL framework training")
+    parser.add_argument('--run_validation', default=True)
+    parser.add_argument('--restart', default=True, action='store_true')
+    parser.add_argument('--verbose', default=False, action='store_true')
+    parser.add_argument('--cuda_devices', '-c', default='0')
+
+    # next_model_iteration_num = get_config_for_app()['model_iteration'] + 1
+
+    app_json = get_config_for_app()
+    model_iter = app_json['model_iteration']
+
+    parser.add_argument('--model_path', '-p',
+                        default=os.path.join(os.path.dirname(__file__), 'model_' + str(model_iter + 1)))
+
+    parser.add_argument('--patch_csv',
+                        default=os.path.join(os.path.dirname(__file__), 'data', 'patch_data.csv'))
+
+    parser.add_argument('--stack_csv',
+                        default=os.path.join(os.path.dirname(__file__), 'data', 'subject_data.csv'))
+
+    args = parser.parse_args()
+
+    if args.verbose:
+        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
+        tf.logging.set_verbosity(tf.logging.INFO)
+    else:
+        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+        tf.logging.set_verbosity(tf.logging.ERROR)
+
+    # GPU allocation options
+    os.environ["CUDA_VISIBLE_DEVICES"] = args.cuda_devices
+
+    # Handle restarting and resuming training
+    if args.restart:
+        print('Restarting training from scratch.')
+        os.system('rm -rf {}'.format(args.model_path))
+
+    if not os.path.isdir(args.model_path):
+        os.system('mkdir -p {}'.format(args.model_path))
+    else:
+        print('Resuming training on model_path {}'.format(args.model_path))
+
+    # Call training
+    re_train(args)
+
+
+def re_train(args):
+    np.random.seed(42)
+    tf.set_random_seed(42)
+
+    print('Setting up...')
+
+    # Parse csv files for file names
+    patch_filenames = pd.read_csv(
+        args.train_csv,
+        dtype=object,
+        keep_default_na=False,
+        na_values=[]).as_matrix()
+
+    subj_filenames = pd.read_csv(
+        args.stack_csv,
+        dtype=object,
+        keep_default_na=False,
+        na_values=[]).as_matrix()
+
+    app_json = get_config_for_app()
+
+    val_filenames = []
+
+    for row in subj_filenames:
+        if row[4] == '1':
+            val_filenames.append(row)
+
+    train_filenames = []
+    for row in patch_filenames:
+        train_filenames.append(['p'+str(row[0]), row[1]])
+
+    for row in subj_filenames:
+        if row[3] == '1':
+            train_filenames.append(row)
+
+    # Set up a data reader to handle the file i/o.
+    reader_params = {'n_examples': 16,
+                     'example_size': [1, 64, 64],
+                     'extract_examples': True}
+    num_channels = app_json['num_channels']
+    reader_example_shapes = {'features': {'x': reader_params['example_size'] + [num_channels, ]},
+                             'labels': {'y': reader_params['example_size']}}
+
+    # module_name = 'contributions.applications.AL_framework.applications.app' + str(app_json['id']) + '.readers.'
+    #
+    # if app_json['reader_type'] == "Patch":
+    #     module_name = module_name + 'patch_reader'
+    # elif app_json['reader_type'] == "Slice":
+    #     module_name = module_name + 'slice_reader'
+    # elif app_json['reader_type'] == "Stack":
+    #     module_name = module_name + 'stack_reader'
+    # else:
+    #     print("Unsupported reader type: please specify a new one")
+    #     return
+
+    # mod = import_module(module_name)
+    mod = import_module('readers.retrain_reader')
+    read_fn = vars(mod)['read_fn']
+
+    reader = Reader(read_fn,
+                    {'features': {'x': tf.float32},
+                     'labels': {'y': tf.int32}})
+
+    # Get input functions and queue initialisation hooks for training and
+    # validation data
+    batch_size = app_json['batch_size']
+    train_input_fn, train_qinit_hook = reader.get_inputs(
+        file_references=train_filenames,
+        mode=tf.estimator.ModeKeys.TRAIN,
+        example_shapes=reader_example_shapes,
+        batch_size=batch_size,
+        shuffle_cache_size=SHUFFLE_CACHE_SIZE,
+        params=reader_params)
+
+    val_input_fn, val_qinit_hook = reader.get_inputs(
+        file_references=val_filenames,
+        mode=tf.estimator.ModeKeys.EVAL,
+        example_shapes=reader_example_shapes,
+        batch_size=batch_size,
+        shuffle_cache_size=SHUFFLE_CACHE_SIZE,
+        params=reader_params)
+
+    # Instantiate the neural network estimator
+    nn = tf.estimator.Estimator(
+        model_fn=model_fn,
+        model_dir=args.model_path,
+        params={"learning_rate": 0.001},
+        config=tf.estimator.RunConfig())
+
+    # Hooks for validation summaries
+    val_summary_hook = tf.contrib.training.SummaryAtEndHook(
+        os.path.join(args.model_path, 'eval'))
+    step_cnt_hook = tf.train.StepCounterHook(
+        every_n_steps=EVAL_EVERY_N_STEPS,
+        output_dir=args.model_path)
+
+    print('Starting tuning...')
+    max_steps = app_json['max_steps']
+    try:
+        for _ in range(max_steps // EVAL_EVERY_N_STEPS):
+            nn.train(
+                input_fn=train_input_fn,
+                hooks=[train_qinit_hook, step_cnt_hook],
+                steps=EVAL_EVERY_N_STEPS)
+
+            if args.run_validation:
+                results_val = nn.evaluate(
+                    input_fn=val_input_fn,
+                    hooks=[val_qinit_hook, val_summary_hook],
+                    steps=EVAL_STEPS)
+                print('Step = {}; val loss = {:.5f};'.format(
+                    results_val['global_step'], results_val['loss']))
+
+    except KeyboardInterrupt:
+        pass
+
+    print('Stopping now.')
+    export_dir = nn.export_savedmodel(
+        export_dir_base=args.model_path,
+        serving_input_receiver_fn=reader.serving_input_receiver_fn(reader_example_shapes))
+    print('Model saved to {}.'.format(export_dir))
+    app_json['model_status'] = 2
+    app_json['model_iteration'] = app_json['model_iteration'] + 1
+    write_app_config(app_json)
+    print('Updated model status in model config')
+
 def tune_model():
     # Set up argument parser
     parser = argparse.ArgumentParser(description="Contribution: dHCP GM AL framework training")
@@ -88,10 +262,10 @@ def tune_model():
         print('Resuming training on model_path {}'.format(args.model_path))
 
     # Call training
-    train(args)
+    tune_train(args)
 
 
-def train(args):
+def tune_train(args):
     np.random.seed(42)
     tf.set_random_seed(42)
 
