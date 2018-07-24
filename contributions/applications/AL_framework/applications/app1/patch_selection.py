@@ -467,3 +467,4 @@ if __name__ == '__main__':
 
     #select_patches()
     select_patch_batch(args, get_config_for_app())
+
