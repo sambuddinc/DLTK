@@ -100,7 +100,7 @@ def predict(args):
     for i, row in enumerate(file_names):
         if row[6] == '1':
             ua_fn.append(row)
-
+    print('selecting from', len(ua_fn), 'image stacks')
     # From the model_path, parse the latest saved model and restore a
     # predictor from it
     export_dir = [os.path.join(args.model_path, o) for o in os.listdir(args.model_path)
@@ -192,7 +192,7 @@ def predict(args):
 
 
 def select_patch_batch(args, app_json):
-    images = []
+    images = [[],[]]
     confidences = []
     features = []
     segs = []
@@ -212,12 +212,11 @@ def select_patch_batch(args, app_json):
     patch_count = 0
     for im in ua_fn:
         im_id = im[0]
-        im_name = im[2]
         im_fn = os.path.join(im[1])
         im_pref = im[2]
         ims = []
         for i, im in enumerate(app_json['input_postfix']):
-            ima = sitk.GetArrayFromImage(sitk.ReadImage(os.path.join(im_fn, im_name + str(im))))
+            ima = sitk.GetArrayFromImage(sitk.ReadImage(os.path.join(im_fn, im_pref + str(im))))
             ims.append(ima)
         image = np.stack(ims, axis=-1)
         conf = sitk.GetArrayFromImage(sitk.ReadImage(os.path.join(im_fn, str(im_pref) +"conf.nii.gz")))
@@ -253,7 +252,7 @@ def select_patch_batch(args, app_json):
     sorted_indices = np.argsort(confidence_vals, axis=-1)
     top_conf_indices = sorted_indices[:100]  # swap sign for alternate ends of list
 
-    top_conf_images = []
+    top_conf_images = [[],[]]
     for i, im in enumerate(app_json['input_postfix']):
         top_conf_images[i] = [images[i][j] for j in top_conf_indices]
     top_conf_feat = [features[i] for i in top_conf_indices]
@@ -466,4 +465,5 @@ if __name__ == '__main__':
     # GPU allocation options
     os.environ["CUDA_VISIBLE_DEVICES"] = args.cuda_devices
 
+    #select_patches()
     select_patch_batch(args, get_config_for_app())

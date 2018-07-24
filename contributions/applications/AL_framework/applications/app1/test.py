@@ -27,7 +27,7 @@ def predict(args):
     for i, row in enumerate(file_names):
         if row[5] == '1':
             test_filenames.append(row)
-
+    print('testing on : ', len(test_filenames), ' entries')
     # From the model_path, parse the latest saved model and restore a
     # predictor from it
     export_dir = [os.path.join(args.model_path, o) for o in os.listdir(args.model_path)
@@ -49,7 +49,7 @@ def predict(args):
     print("Preparing to predict")
     # Iterate through the files, predict on the full volumes and compute a Dice
     # coefficient
-    for output in read_fn(file_references=file_names,
+    for output in read_fn(file_references=test_filenames,
                           mode=tf.estimator.ModeKeys.EVAL,
                           params=reader_params):
         print("Predicting on an entry")
