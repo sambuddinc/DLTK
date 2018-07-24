@@ -14,6 +14,7 @@ from dltk.core import metrics as metrics
 from dltk.utils import sliding_window_segmentation_inference
 
 
+# TODO: make callable from server/ other modules code/ pipeline stages
 def predict(args):
     file_names = pd.read_csv(
         args.csv,
