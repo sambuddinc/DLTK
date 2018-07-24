@@ -466,4 +466,5 @@ if __name__ == '__main__':
     # GPU allocation options
     os.environ["CUDA_VISIBLE_DEVICES"] = args.cuda_devices
 
-    select_patch_batch(args, get_config_for_app())
+    # select_patch_batch(args, get_config_for_app())
+    select_patches()
