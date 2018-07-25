@@ -157,16 +157,25 @@ def list_patches_for(app_id):
 @app.route("/patch/<app_id>/<patch_id>", methods=['GET'])
 def get_patch_from(app_id, patch_id):
     patch_dir = os.path.join(al_fw_path, 'app' + str(app_id), 'data', 'active_patches')
-    raw_path = os.path.join(patch_dir, str(patch_id) + '_patch.nii.gz')
+    app_json = get_config_for_app(app_id)
+    ims = []
+    for i, im in enumerate(app_json['input_postfix']):
+        raw_path = os.path.join(patch_dir, str(patch_id) + '_' + im)
+        raw_sitk = sitk.ReadImage(raw_path)
+        raw_sitk = sitk.RescaleIntensity(raw_sitk, 0, 255)
+        raw_l = sitk.GetArrayFromImage(raw_sitk).tolist()
+        ims.append(raw_l)
+
     seg_path = os.path.join(patch_dir, str(patch_id) + '_seg.nii.gz')
     emseg_path = os.path.join(patch_dir, str(patch_id) + '_emseg.nii.gz')
 
-    raw_sitk = sitk.ReadImage(raw_path)
     seg_sitk = sitk.ReadImage(seg_path)
     emseg_sitk = sitk.ReadImage(emseg_path)
+    em_l = np.unique(sitk.GetArrayFromImage(emseg_sitk).flatten())
+    print(em_l)
 
     return jsonify({
-                'patch': sitk.GetArrayFromImage(raw_sitk).tolist(),
+                'patch': ims,
                 'seg': sitk.GetArrayFromImage(seg_sitk).tolist(),
                 'emseg': sitk.GetArrayFromImage(emseg_sitk).tolist()
             })
