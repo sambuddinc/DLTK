@@ -66,7 +66,7 @@ def train_initial_model():
                         default=os.path.join(os.path.dirname(__file__), 'model'))
 
     parser.add_argument('--train_csv',
-                        default=os.path.join(os.path.dirname(__file__), 'data', 'subject_data'))
+                        default=os.path.join(os.path.dirname(__file__), 'data', 'subject_data.csv'))
 
     args = parser.parse_args()
 
@@ -147,8 +147,8 @@ def train(args):
     reader_example_shapes = {'features': {'x': reader_params['example_size'] + [num_channels, ]},
                              'labels': {'y': reader_params['example_size']}}
 
-    module_name = 'contributions.applications.AL_framework.applications.app' + str(app_json['id']) + '.readers.'
-
+    #module_name = 'contributions.applications.AL_framework.applications.app' + str(app_json['id']) + '.readers.'
+    module_name = 'readers.'
     if app_json['reader_type'] == "Patch":
         module_name = module_name + 'patch_reader'
     elif app_json['reader_type'] == "Slice":
@@ -314,5 +314,5 @@ def model_fn(features, labels, mode, params):
 
 if __name__ == '__main__':
     print('init from main')
-    init_app_func()
+    train_initial_model()
 

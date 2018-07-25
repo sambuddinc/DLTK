@@ -88,7 +88,7 @@ if __name__ == '__main__':
     parser.add_argument('--cuda_devices', '-c', default='0')
 
     parser.add_argument('--model_path', '-p',
-                        default=os.path.join(os.path.dirname(__file__), 'model'))
+                        default=os.path.join(os.path.dirname(__file__), 'model_1_tune'))
 
     parser.add_argument('--csv',
                         default=os.path.join(os.path.dirname(__file__), 'data', 'subject_data.csv'))

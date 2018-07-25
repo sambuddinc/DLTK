@@ -52,7 +52,7 @@ def retrain_model():
     parser.add_argument('--run_validation', default=True)
     parser.add_argument('--restart', default=True, action='store_true')
     parser.add_argument('--verbose', default=False, action='store_true')
-    parser.add_argument('--cuda_devices', '-c', default='0')
+    parser.add_argument('--cuda_devices', '-c', default='6')
 
     # next_model_iteration_num = get_config_for_app()['model_iteration'] + 1
 
@@ -102,7 +102,7 @@ def re_train(args):
 
     # Parse csv files for file names
     patch_filenames = pd.read_csv(
-        args.train_csv,
+        args.patch_csv,
         dtype=object,
         keep_default_na=False,
         na_values=[]).as_matrix()
@@ -481,4 +481,6 @@ def write_app_config(app_json):
 
 if __name__ == '__main__':
     print('retrain from main')
-    tune_model()
+    #tune_model()
+    retrain_model()
+
