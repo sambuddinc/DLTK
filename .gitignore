@@ -5,3 +5,7 @@ _docs/build
 *.pyc
 .idea
 .ipynb_checkpoints
+contributions/applications/AL_framework/applications/**/*.meta
+contributions/applications/AL_framework/applications/**/*.index
+contributions/applications/AL_framework/applications/**/eval/*
+contributions/applications/AL_framework/applications/**/model.ckpt-*
