@@ -1,0 +1,23 @@
+{
+    "id": 2,
+    "model_iteration": 0,
+    "reader_type": "Slice",
+    "input_desc": [
+        "t2w MRI",
+        "t1w MRI"
+    ],
+    "output_postfix": "contained in subject data details",
+    "name": "App 2",
+    "max_steps": 5000,
+    "output_desc": "GM manual tissue segmentation",
+    "data_dir": "/data",
+    "model_status": 0,
+    "num_classes": 2,
+    "retrain_flag": true,
+    "num_channels": 2,
+    "input_postfix": [
+        "T2w_restore_brain.nii.gz",
+        "T1w_restore_brain.nii.gz"
+    ],
+    "batch_size": 16
+}
