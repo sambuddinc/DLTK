@@ -118,7 +118,7 @@ def re_train(args):
     val_filenames = []
 
     for row in subj_filenames:
-        if row[4] == '1':
+        if row[8] == '1':
             val_filenames.append(row)
 
     train_filenames = []
@@ -126,7 +126,7 @@ def re_train(args):
         train_filenames.append(['p'+str(row[0]), row[1]])
 
     for row in subj_filenames:
-        if row[3] == '1':
+        if row[7] == '1':
             train_filenames.append(row)
 
     # Set up a data reader to handle the file i/o.
@@ -289,7 +289,7 @@ def tune_train(args):
     val_filenames = []
 
     for row in subj_filenames:
-        if row[4] == '1':
+        if row[8] == '1':
             val_filenames.append(row)
 
     # Set up a data reader to handle the file i/o.
@@ -354,7 +354,8 @@ def tune_train(args):
         output_dir=args.model_path)
 
     print('Starting tuning...')
-    max_steps = app_json['max_steps']
+    #max_steps = app_json['max_steps']
+    max_steps = 100
     try:
         for _ in range(max_steps // EVAL_EVERY_N_STEPS):
             nn.train(
@@ -481,6 +482,6 @@ def write_app_config(app_json):
 
 if __name__ == '__main__':
     print('retrain from main')
-    #tune_model()
+    tune_model()
     retrain_model()
 
