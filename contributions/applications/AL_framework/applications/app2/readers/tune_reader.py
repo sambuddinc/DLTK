@@ -78,17 +78,19 @@ def read_fn(file_references, mode, params=None):
         elif mode == tf.estimator.ModeKeys.EVAL:
             # Handle Eval stacks in here
             subject_id = f[0]
-            subj_path = f[1]
-            subj_prefix = f[2]
-            stack_folder_path = subj_path
+            slice_index = int(f[3])
+            subj_path = f[5]
+            subj_prefix = f[6]
+            man_path = f[4]
 
             app_json = get_config_for_app()
             sitk_ref = None
             inputs_to_stack = []
             for i, input_type in enumerate(app_json['input_postfix']):
                 # Read the image nii with sitk and keep the pointer to the sitk.Image of an input
-                im_sitk = sitk.ReadImage(os.path.join(stack_folder_path, str(subj_prefix + input_type)))
+                im_sitk = sitk.ReadImage(os.path.join(subj_path, subj_prefix, input_type))
                 im = sitk.GetArrayFromImage(im_sitk)
+                im = im[slice_index, :, :]
                 im = whitening(im)
                 inputs_to_stack.append(im)
                 if i == 0:
@@ -98,18 +100,17 @@ def read_fn(file_references, mode, params=None):
             # print("Correct stacking: ", len(inputs_to_stack) == len(app_json['input_postfix']))
             images = np.stack(inputs_to_stack, axis=-1).astype(np.float32)
 
-            lbl_sitk = sitk.ReadImage(os.path.join(stack_folder_path, str(subj_prefix + app_json['output_postfix'])))
+            lbl_sitk = sitk.ReadImage(os.path.join(man_path))
             lbl = sitk.GetArrayFromImage(lbl_sitk).astype(np.int32)
-
-            # Remove other class labels to leave just the grey matter
-            lbl[lbl != 2.] = 0.
-            lbl[lbl == 2.] = 1.
+            lbl = lbl[slice_index, :, :]
 
             # Check if reader is returning training examples or full images
             if params['extract_examples']:
                 # print("extracting training examples (not full images)")
                 n_examples = params['n_examples']
                 example_size = params['example_size']
+                lbl = lbl.reshape([1, lbl.shape[0], lbl.shape[1]])
+                images = images.reshape([lbl.shape[0], lbl.shape[1], lbl.shape[2], app_json['num_channels']])
 
                 images, lbl = extract_class_balanced_example_array(
                     image=images,
@@ -124,6 +125,8 @@ def read_fn(file_references, mode, params=None):
                            'labels': {'y': lbl[e].astype(np.int32)},
                            'subject_id': subject_id}
             else:
+                lbl = lbl.reshape([1, lbl.shape[0], lbl.shape[1]])
+                images = images.reshape([lbl.shape[0], lbl.shape[1], lbl.shape[2], app_json['num_channels']])
                 assert not np.any(np.isnan(images))
                 assert sitk_ref is not None
                 yield {'features': {'x': images},

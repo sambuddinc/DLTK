@@ -83,10 +83,6 @@ def read_fn(file_references, mode, params=None):
                 man_path = f[4]
                 image_path = f[5]
                 image_prefix = f[6]
-                #subj_path = f[1]
-                #subj_prefix = f[2]
-                #stack_folder_path = subj_path
-                # stack_folder_path = os.path.join(subj_path, 'stacks')
 
                 app_json = get_config_for_app()
                 sitk_ref = None
@@ -163,7 +159,7 @@ def read_fn(file_references, mode, params=None):
             inputs_to_stack = []
             for i, input_type in enumerate(app_json['input_postfix']):
                 # Read the image nii with sitk and keep the pointer to the sitk.Image of an input
-                im_sitk = sitk.ReadImage(os.path.join(subj_path, subj_prefix, input_type)))
+                im_sitk = sitk.ReadImage(os.path.join(subj_path, subj_prefix, input_type))
                 im = sitk.GetArrayFromImage(im_sitk)
                 im = im[slice_index,:,:]
                 im = whitening(im)
@@ -187,7 +183,7 @@ def read_fn(file_references, mode, params=None):
                 # print("extracting training examples (not full images)")
                 n_examples = params['n_examples']
                 example_size = params['example_size']
-                lbl = lbl.reshape([1, lbl.shape[0], lbl.shape[1])
+                lbl = lbl.reshape([1, lbl.shape[0], lbl.shape[1]])
                 images = images.reshape([lbl.shape[0], lbl.shape[1], lbl.shape[2], app_json['num_channels']])
   
                 images, lbl = extract_class_balanced_example_array(
