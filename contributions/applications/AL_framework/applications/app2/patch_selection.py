@@ -98,7 +98,7 @@ def predict(args):
     # We want to predict only on unannotated subjects
     ua_fn = []
     for i, row in enumerate(file_names):
-        if row[6] == '1':
+        if row[10] == '1':
             ua_fn.append(row)
     print('selecting from', len(ua_fn), 'image stacks')
     # From the model_path, parse the latest saved model and restore a
@@ -166,25 +166,30 @@ def predict(args):
 
         # Save the file as .nii.gz using the header information from the
         # original sitk
-        # print(output)
+        # print(output)a
         subj_path = output['path']
         output_fn = os.path.join(subj_path, '{}bronze_seg.nii.gz'.format(output['prefix']))
+        #new_stack = np.zeros(sitk.GetArrayFromImage(output['sitk']).shape)
+        #new_stack[output['slice'], :, :] = pred[0]
         new_sitk = sitk.GetImageFromArray(pred[0].astype(np.int32))
         print('pred unique:', np.unique(np.array(pred[0]).flatten()))
-        new_sitk.CopyInformation(output['sitk'])
+        #info_sitk = sitk.GetArrayFromImage(output['sitk'])
+        #info_sitk = info_sitk[output['slice_index'],:,:]
+        #info_sitk = sitk.GetImageFromArray(info_sitk)
+        #new_sitk.CopyInformation(info_sitk)
         sitk.WriteImage(new_sitk, output_fn)
 
         # Save the feature vector file as a .nii.gz using header info from origincal sitk
         print("Features: " + str(features.shape))
         feature_sitk = sitk.GetImageFromArray(features[0])
-        feature_sitk.CopyInformation(output['sitk'])
+        #feature_sitk.CopyInformation(info_sitk)
         sitk.WriteImage(feature_sitk, os.path.join(subj_path, '{}feat.nii.gz'.format(output['prefix'])))
 
         # Save the confidence vector file as a .nii.gz using header info from original stack
         print("Confidences: " + str(class_confidences.shape))
         print(np.unique(np.array(class_confidences).flatten()))
         conf_sitk = sitk.GetImageFromArray(class_confidences[0])
-        conf_sitk.CopyInformation(output['sitk'])
+        #conf_sitk.CopyInformation(info_sitk)
         sitk.WriteImage(conf_sitk, os.path.join(subj_path, '{}conf.nii.gz'.format(output['prefix'])))
 
     # Now perform patch selection with the saved outputs
@@ -206,26 +211,47 @@ def select_patch_batch(args, app_json):
     # We want to predict only on unannotated subjects
     ua_fn = []
     for i, row in enumerate(file_names):
-        if row[6] == '1':
+        if row[10] == '1':
             ua_fn.append(row)
 
     patch_count = 0
     for im in ua_fn:
         im_id = im[0]
-        im_fn = os.path.join(im[1])
-        im_pref = im[2]
+        man_path = im[4]
+        im_fn = os.path.join(im[5])
+        im_pref = im[6]
+        slice_index = int(im[3])
         ims = []
         for i, im in enumerate(app_json['input_postfix']):
             ima = sitk.GetArrayFromImage(sitk.ReadImage(os.path.join(im_fn, im_pref + str(im))))
+            ima = ima[slice_index, :, :]
             ims.append(ima)
         image = np.stack(ims, axis=-1)
+        print('ima: ', image.shape)
         conf = sitk.GetArrayFromImage(sitk.ReadImage(os.path.join(im_fn, str(im_pref) +"conf.nii.gz")))
+        print('conf: ', np.array(conf).shape)
         feat = sitk.GetArrayFromImage(sitk.ReadImage(os.path.join(im_fn, str(im_pref) +"feat.nii.gz")))
+        print('feat: ', np.array(feat).shape)
         seg = sitk.GetArrayFromImage(sitk.ReadImage(os.path.join(im_fn, str(im_pref) +"bronze_seg.nii.gz")))
-        em_seg = sitk.GetArrayFromImage(sitk.ReadImage(os.path.join(im_fn, str(im_pref) + str(app_json['output_postfix']))))
-        em_seg[em_seg != 2.] = 0.
-        em_seg[em_seg == 2.] = 1.
+        em_seg = sitk.GetArrayFromImage(sitk.ReadImage(os.path.join(man_path)))
+        em_seg = em_seg[slice_index, :, :]
+        #em_seg[em_seg != 2.] = 0.
+        #em_seg[em_seg == 2.] = 1.
+
+        d_s = np.array(em_seg).shape
+        em_seg = np.array(em_seg).reshape([1, d_s[0], d_s[1]])
+        image = np.array(image).reshape([em_seg.shape[0], em_seg.shape[1], em_seg.shape[2], 2])
+        seg = np.array(seg).reshape([em_seg.shape[0], em_seg.shape[1], em_seg.shape[2]])
+        feat = np.array(feat).reshape([2, em_seg.shape[1], em_seg.shape[2]])
+        conf = np.array(conf).reshape(feat.shape)
+
+
         patches = extract_random_patches(image, conf, feat, seg, em_seg, n_examples=100)
+        print('im: ', np.array(patches[0]).shape)
+        print('confs: ', np.array(patches[1]).shape)
+        print('feats: ', np.array(patches[2]).shape)
+        print('segs: ', np.array(patches[3]).shape)
+        print('mans: ', np.array(patches[4]).shape)
         patch_count = patch_count + 100
         for i, im in enumerate(app_json['input_postfix']):
             images[i] = np.concatenate((images[i], patches[0][:, :, :, :, i]), axis=0) \
@@ -425,16 +451,38 @@ def extract_random_patches(image_list, conf_list, feat_list, seg_list, em_seg_li
             ex_seg = seg_list[j][slicer][np.newaxis]
             ex_emseg = em_seg_list[j][slicer][np.newaxis]
             # Concatenate and return the examples
-            examples[j] = np.concatenate((examples[j], ex_image), axis=0) \
-                if (len(examples[j]) != 0) else ex_image
-            examples_f[j] = np.concatenate((examples_f[j], ex_feat), axis=0) \
-                if (len(examples_f[j]) != 0) else ex_feat
-            examples_c[j] = np.concatenate((examples_c[j], ex_conf), axis=0) \
-                if (len(examples_c[j]) != 0) else ex_conf
-            examples_s[j] = np.concatenate((examples_s[j], ex_seg), axis=0) \
-                if (len(examples_s[j]) != 0) else ex_seg
-            examples_e[j] = np.concatenate((examples_e[j], ex_emseg), axis=0) \
-                if (len(examples_e[j]) != 0) else ex_emseg
+            #print('patch: ', np.array(ex_image).shape)
+            #examples[j] = np.concatenate((examples[j], ex_image), axis=0) \
+            #    if (len(examples[j]) != 0) else ex_image
+           # print(np.array(ex_feat).shape)
+           # print(np.array(examples_f[j]).shape)
+           # if (len(examples_f[j]) == 0):
+           #     examples_f[j] = ex_feat
+           # elif (np.array(ex_feat).shape == np.array(examples_f[j]).shape):
+           #     examples_f[j] = np.concatenate((examples_f[j], ex_feat), axis=0) \
+           #         if (len(examples_f[j]) != 0) else ex_feat
+           # if (np.array(ex_conf).shape == np.array(examples_c[j]).shape or len(examples_c[j]) == 0):
+           #     examples_c[j] = np.concatenate((examples_c[j], ex_conf), axis=0) \
+           #         if (len(examples_c[j]) != 0) else ex_conf
+           # if (np.array(ex_seg).shape == np.array(examples_s[j]).shape):
+           #     #ex_seg = np.array(ex_seg).reshape(np.array(examples_s[0]).shape)
+           #     examples_s[j] = np.concatenate((examples_s[j], ex_seg), axis=0) \
+           #         if (len(examples_s[j]) != 0) else ex_seg
+           # examples_e[j] = np.concatenate((examples_e[j], ex_emseg), axis=0) \
+           #     if (len(examples_e[j]) != 0) else ex_emseg
+            try:
+                examples[j] = np.concatenate((examples[j], ex_image), axis=0) \
+                    if (len(examples[j]) != 0) else ex_image
+                examples_f[j] = np.concatenate((examples_f[j], ex_feat), axis=0) \
+                    if (len(examples_f[j]) != 0) else ex_feat
+                examples_c[j] = np.concatenate((examples_c[j], ex_conf), axis=0) \
+                    if (len(examples_c[j]) != 0) else ex_conf
+                examples_s[j] = np.concatenate((examples_s[j], ex_seg), axis=0) \
+                    if (len(examples_s[j]) != 0) else ex_seg
+                examples_e[j] = np.concatenate((examples_e[j], ex_emseg), axis=0) \
+                    if (len(examples_e[j]) != 0) else ex_emseg
+            except:
+                print('value arror') 
 
     if was_singular:
         return [examples[0], examples_c[0], examples_f[0], examples_s[0], examples_e[0]]

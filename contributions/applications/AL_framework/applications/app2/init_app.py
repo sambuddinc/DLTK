@@ -136,10 +136,12 @@ def train(args):
     val_filenames = []
 
     for row in all_filenames:
-        if row[3] == '1':
+        if row[7] == '1':
             train_filenames.append(row)
-        if row[4] == '1':
+        if row[8] == '1':
             val_filenames.append(row)
+    print(len(train_filenames), ' training examples found')
+    print(len(val_filenames), ' validation examples found')
 
     # Set up a data reader to handle the file i/o.
     reader_params = {'n_examples': 16,

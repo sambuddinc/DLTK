@@ -56,7 +56,7 @@ def read_fn(file_references, mode, params=None):
         inputs_to_stack = []
         for i, input_type in enumerate(app_json['input_postfix']):
             # Read the image nii with sitk and keep the pointer to the sitk.Image of an input
-            im_sitk = sitk.ReadImage(os.path.join(stack_folder_path, str(subj_prefix + input_type)))
+            im_sitk = sitk.ReadImage(os.path.join(img_path, str(img_prefix + input_type)))
             im = sitk.GetArrayFromImage(im_sitk)
         # Drop all unannotated slices
             im = im[slice_index, :, :]
@@ -73,7 +73,8 @@ def read_fn(file_references, mode, params=None):
                    'labels': None,
                    'sitk': sitk_ref,
                    'subject_id': subject_id,
-                   }
+                   'path': img_path,
+                   'prefix': img_prefix}
 
         lbl = sitk.GetArrayFromImage(sitk.ReadImage(man_path)).astype(
             np.int32)
@@ -104,7 +105,10 @@ def read_fn(file_references, mode, params=None):
             for e in range(n_examples):
                 yield {'features': {'x': images[e].astype(np.float32)},
                        'labels': {'y': lbl[e].astype(np.int32)},
-                       'subject_id': subject_id}
+                       'subject_id': subject_id,
+                       'path': img_path,
+                       'prefix': img_prefix
+                      }
         else:
             lbl = lbl.reshape([1, lbl.shape[0], lbl.shape[1]])
             images = images.reshape([lbl.shape[0], lbl.shape[1], lbl.shape[2], app_json['num_channels']])
@@ -113,6 +117,8 @@ def read_fn(file_references, mode, params=None):
                    'labels': {'y': lbl},
                    'sitk': im_sitk,
                    'subject_id': subject_id,
-                   'slice_index': slice_index}
+                   'slice_index': slice_index,
+                   'path': img_path,
+                   'prefix': img_prefix}
 
     return

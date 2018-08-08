@@ -31,6 +31,7 @@ def get_row_for_manual_entry(sid, subject_id):
 
 # Experiment 3: T2 -> manual, then maybe t1 aswell
 output_data = []
+split_counter = 0
 for i, row in enumerate(all_data):
     subj_id = row[0]
     subj_path = "sub-" + subj_id
@@ -50,22 +51,22 @@ for i, row in enumerate(all_data):
                 # subj_row = [i + 1, subj_data_path, subj_data_prefix]
                 subj_row.append(subj_data_path)
                 subj_row.append(subj_data_prefix)
-                if i < 5:  # Initial Training Set
+                if split_counter < 5:  # Initial Training Set
                     subj_row.append(1)
                     subj_row.append(0)
                     subj_row.append(0)
                     subj_row.append(0)
-                elif 5 <= i < 7:  # Validation set
+                elif 5 <= split_counter < 7:  # Validation set
                     subj_row.append(0)
                     subj_row.append(1)
                     subj_row.append(0)
                     subj_row.append(0)
-                elif 7 <= i < 10:  # Test Set
+                elif 7 <= split_counter < 10:  # Test Set
                     subj_row.append(0)
                     subj_row.append(0)
                     subj_row.append(1)
                     subj_row.append(0)
-                elif 10 <= i < 30:  # Unannotated rest of data to be queried for new annotations
+                elif 10 <= split_counter < 30:  # Unannotated rest of data to be queried for new annotations
                     subj_row.append(0)
                     subj_row.append(0)
                     subj_row.append(0)
@@ -76,6 +77,7 @@ for i, row in enumerate(all_data):
                     subj_row.append(0)
                     subj_row.append(0)
                 output_data.append(subj_row)
+                split_counter = split_counter + 1
 
 df = pd.DataFrame(output_data, columns=["id", "subject_id", "session", "slice","man_path", "subj_data_path", "subj_data_prefix", "train", "val", "test", "unannotated"])
-df.to_csv(man_dir + "experiment_3.csv", index=False)
+df.to_csv(man_dir + "subject_data.csv", index=False)

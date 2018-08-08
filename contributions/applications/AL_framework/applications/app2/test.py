@@ -51,7 +51,7 @@ def predict(args):
     # We trained on the first 4 subjects, so we predict on the rest
     test_filenames = []
     for i, row in enumerate(file_names):
-        if row[5] == '1':
+        if row[9] == '1':
             test_filenames.append(row)
     print('testing on : ', len(test_filenames), ' entries')
     # From the model_path, parse the latest saved model and restore a
